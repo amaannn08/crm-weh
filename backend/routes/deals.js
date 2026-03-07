@@ -1,5 +1,5 @@
 import express from 'express'
-import { sql } from '../db/neon.js'
+import { sql, poolRef } from '../db/neon.js'
 import {
   clampScore,
   computeWeightedScore,
@@ -182,7 +182,8 @@ router.patch('/:id', async (req, res) => {
         WHERE id = $${values.length + 1}
         RETURNING *
       `
-      const rows = await sql([text], ...values, id)
+      const result = await poolRef.query(text, [...values, id])
+      const rows = result.rows
       if (!rows[0]) {
         return res.status(404).json({ error: 'Deal not found' })
       }
