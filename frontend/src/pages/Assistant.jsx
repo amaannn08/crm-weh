@@ -1,5 +1,15 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { motion } from 'framer-motion'
+import ReactMarkdown from 'react-markdown'
+import { routes } from '../api/routes'
+
+const markdownComponents = {
+  p: ({ children }) => <p className="text-sm leading-relaxed [&:not(:last-child)]:mb-2">{children}</p>,
+  ul: ({ children }) => <ul className="list-disc list-inside text-sm leading-relaxed space-y-1 my-2">{children}</ul>,
+  ol: ({ children }) => <ol className="list-decimal list-inside text-sm leading-relaxed space-y-1 my-2">{children}</ol>,
+  li: ({ children }) => <li className="text-sm leading-relaxed">{children}</li>,
+  strong: ({ children }) => <strong className="font-semibold">{children}</strong>
+}
 
 function AssistantPage() {
   const [messages, setMessages] = useState([
@@ -37,17 +47,52 @@ function AssistantPage() {
     setInputValue('')
     setIsTyping(true)
 
-    // Simulate agent response
-    setTimeout(() => {
-      const agentMessage = {
-        id: Date.now() + 1,
-        role: 'assistant',
-        content: "I'm a demo assistant. I can't really do anything yet, but I look good!",
-        timestamp: new Date()
+    const assistantId = Date.now() + 1
+    let assistantAdded = false
+
+    try {
+      const res = await fetch(routes.assistantChat, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: inputValue })
+      })
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        throw new Error(err.error || `Request failed: ${res.status}`)
       }
-      setMessages(prev => [...prev, agentMessage])
+      const reader = res.body.getReader()
+      const decoder = new TextDecoder()
+      let content = ''
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+        content += decoder.decode(value, { stream: true })
+        if (!assistantAdded) {
+          assistantAdded = true
+          setMessages(prev => [
+            ...prev,
+            { id: assistantId, role: 'assistant', content, timestamp: new Date() }
+          ])
+        } else {
+          setMessages(prev =>
+            prev.map((m) => (m.id === assistantId ? { ...m, content } : m))
+          )
+        }
+      }
+      if (!assistantAdded) {
+        setMessages(prev => [
+          ...prev,
+          { id: assistantId, role: 'assistant', content: content || '(No response)', timestamp: new Date() }
+        ])
+      }
+    } catch (err) {
+      setMessages(prev => [
+        ...prev,
+        { id: assistantId, role: 'assistant', content: `Error: ${err.message}`, timestamp: new Date() }
+      ])
+    } finally {
       setIsTyping(false)
-    }, 1500)
+    }
   }
 
   return (
@@ -67,7 +112,13 @@ function AssistantPage() {
                   : 'bg-neutral-800 border border-neutral-700 text-neutral-200 rounded-bl-sm'
               }`}
             >
-              <p className="text-sm leading-relaxed whitespace-pre-wrap">{message.content}</p>
+              {message.role === 'assistant' ? (
+                <div className="[&_p]:text-sm [&_p]:leading-relaxed [&_ul]:list-disc [&_ul]:list-inside [&_ul]:my-2 [&_li]:text-sm [&_strong]:font-semibold">
+                  <ReactMarkdown components={markdownComponents}>{message.content}</ReactMarkdown>
+                </div>
+              ) : (
+                <p className="text-sm leading-relaxed whitespace-pre-wrap">{message.content}</p>
+              )}
               <p className={`text-[10px] mt-1.5 ${message.role === 'user' ? 'text-neutral-300' : 'text-neutral-500'}`}>
                 {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
               </p>
