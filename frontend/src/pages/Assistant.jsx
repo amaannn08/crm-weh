@@ -1,7 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react'
+import { useParams, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import ReactMarkdown from 'react-markdown'
-import { routes } from '../api/routes'
+import { routes, conversationUrl } from '../api/routes'
+import { apiHeaders } from '../api/client'
 
 const markdownComponents = {
   p: ({ children }) => <p className="text-sm leading-relaxed [&:not(:last-child)]:mb-2">{children}</p>,
@@ -11,7 +13,20 @@ const markdownComponents = {
   strong: ({ children }) => <strong className="font-semibold">{children}</strong>
 }
 
+function messageFromApi(m, index) {
+  return {
+    id: index + 1,
+    role: m.role,
+    content: m.content,
+    timestamp: m.created_at ? new Date(m.created_at) : new Date()
+  }
+}
+
 function AssistantPage() {
+  const { conversationId } = useParams()
+  const navigate = useNavigate()
+  const isNewSession = !conversationId || conversationId === 'new'
+
   const [messages, setMessages] = useState([
     {
       id: 1,
@@ -22,6 +37,7 @@ function AssistantPage() {
   ])
   const [inputValue, setInputValue] = useState('')
   const [isTyping, setIsTyping] = useState(false)
+  const [loadingConversation, setLoadingConversation] = useState(!isNewSession)
   const messagesEndRef = useRef(null)
 
   const scrollToBottom = () => {
@@ -31,6 +47,50 @@ function AssistantPage() {
   useEffect(() => {
     scrollToBottom()
   }, [messages, isTyping])
+
+  useEffect(() => {
+    if (isNewSession) {
+      setMessages([
+        {
+          id: 1,
+          role: 'assistant',
+          content: "Hello! I'm your deal flow assistant. How can I help you today?",
+          timestamp: new Date()
+        }
+      ])
+      setLoadingConversation(false)
+      return
+    }
+    let cancelled = false
+    setLoadingConversation(true)
+    fetch(conversationUrl(conversationId), { headers: apiHeaders() })
+      .then((res) => {
+        if (!res.ok) throw new Error('Failed to load conversation')
+        return res.json()
+      })
+      .then((data) => {
+        if (cancelled) return
+        if (data.messages && data.messages.length) {
+          setMessages(data.messages.map(messageFromApi))
+        } else {
+          setMessages([
+            {
+              id: 1,
+              role: 'assistant',
+              content: "Hello! I'm your deal flow assistant. How can I help you today?",
+              timestamp: new Date()
+            }
+          ])
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setMessages([{ id: 1, role: 'assistant', content: 'Could not load this conversation.', timestamp: new Date() }])
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingConversation(false)
+      })
+    return () => { cancelled = true }
+  }, [conversationId, isNewSession])
 
   const handleSendMessage = async (e) => {
     e.preventDefault()
@@ -43,22 +103,28 @@ function AssistantPage() {
       timestamp: new Date()
     }
 
-    setMessages(prev => [...prev, userMessage])
+    setMessages((prev) => [...prev, userMessage])
     setInputValue('')
     setIsTyping(true)
 
     const assistantId = Date.now() + 1
     let assistantAdded = false
+    let currentConversationId = conversationId && conversationId !== 'new' ? conversationId : null
 
     try {
       const res = await fetch(routes.assistantChat, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: inputValue })
+        headers: apiHeaders(),
+        body: JSON.stringify({ message: inputValue, conversationId: currentConversationId || undefined })
       })
       if (!res.ok) {
         const err = await res.json().catch(() => ({}))
         throw new Error(err.error || `Request failed: ${res.status}`)
+      }
+      const newId = res.headers.get('X-Conversation-Id')
+      if (newId && !currentConversationId) {
+        currentConversationId = newId
+        navigate(`/assistant/${newId}`, { replace: true })
       }
       const reader = res.body.getReader()
       const decoder = new TextDecoder()
@@ -69,30 +135,38 @@ function AssistantPage() {
         content += decoder.decode(value, { stream: true })
         if (!assistantAdded) {
           assistantAdded = true
-          setMessages(prev => [
+          setMessages((prev) => [
             ...prev,
             { id: assistantId, role: 'assistant', content, timestamp: new Date() }
           ])
         } else {
-          setMessages(prev =>
+          setMessages((prev) =>
             prev.map((m) => (m.id === assistantId ? { ...m, content } : m))
           )
         }
       }
       if (!assistantAdded) {
-        setMessages(prev => [
+        setMessages((prev) => [
           ...prev,
           { id: assistantId, role: 'assistant', content: content || '(No response)', timestamp: new Date() }
         ])
       }
     } catch (err) {
-      setMessages(prev => [
+      setMessages((prev) => [
         ...prev,
         { id: assistantId, role: 'assistant', content: `Error: ${err.message}`, timestamp: new Date() }
       ])
     } finally {
       setIsTyping(false)
     }
+  }
+
+  if (loadingConversation) {
+    return (
+      <div className="flex items-center justify-center h-[calc(100vh-5rem)]">
+        <p className="text-neutral-500">Loading conversation...</p>
+      </div>
+    )
   }
 
   return (
@@ -120,7 +194,7 @@ function AssistantPage() {
                 <p className="text-sm leading-relaxed whitespace-pre-wrap">{message.content}</p>
               )}
               <p className={`text-[10px] mt-1.5 ${message.role === 'user' ? 'text-neutral-300' : 'text-neutral-500'}`}>
-                {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                {(message.timestamp instanceof Date ? message.timestamp : new Date(message.timestamp)).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
               </p>
             </div>
           </motion.div>
