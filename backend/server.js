@@ -3,6 +3,7 @@ import express from 'express'
 import authRoutes from './routes/auth.js'
 import assistantRoutes from './routes/assistant.js'
 import conversationRoutes from './routes/conversations.js'
+import dealsRoutes from './routes/deals.js'
 import { authMiddleware } from './middleware/auth.js'
 import { initSchema } from './db/neon.js'
 
@@ -31,6 +32,7 @@ app.use((req, res, next) => {
 app.use('/auth', authRoutes)
 app.use('/assistant', authMiddleware, assistantRoutes)
 app.use('/conversations', authMiddleware, conversationRoutes)
+app.use('/deals', authMiddleware, dealsRoutes)
 
 app.listen(PORT, () => {
   console.log(`Server listening on http://localhost:${PORT}`)

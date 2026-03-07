@@ -22,6 +22,22 @@ function Header() {
         </div>
         <nav className="ml-auto flex items-center gap-2">
           <NavLink
+            to="/deals"
+            className={({ isActive }) =>
+              `${navLinkBase} ${isActive ? 'text-xl text-white' : 'text-neutral-400'}`
+            }
+          >
+            Deals
+          </NavLink>
+          <NavLink
+            to="/arena"
+            className={({ isActive }) =>
+              `${navLinkBase} ${isActive ? 'text-xl text-white' : 'text-neutral-400'}`
+            }
+          >
+            Arena
+          </NavLink>
+          <NavLink
             to="/assistant"
             className={({ isActive }) =>
               `${navLinkBase} ${isActive ? 'text-xl text-white' : 'text-neutral-400'}`

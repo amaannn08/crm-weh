@@ -30,6 +30,8 @@ export async function initSchema() {
   const client = await pool.connect()
   try {
     await client.query('CREATE EXTENSION IF NOT EXISTS vector')
+
+    // Meetings: transcript + embedding store
     await client.query(`
       CREATE TABLE IF NOT EXISTS meetings (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -42,6 +44,8 @@ export async function initSchema() {
     `)
     await client.query('ALTER TABLE meetings ADD COLUMN IF NOT EXISTS drive_file_id TEXT')
     await client.query('ALTER TABLE meetings ADD COLUMN IF NOT EXISTS source_file_name TEXT')
+
+    // Conversations + messages for the assistant
     await client.query(`
       CREATE TABLE IF NOT EXISTS conversations (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -55,6 +59,98 @@ export async function initSchema() {
         conversation_id UUID NOT NULL REFERENCES conversations(id) ON DELETE CASCADE,
         role TEXT NOT NULL CHECK (role IN ('user', 'assistant')),
         content TEXT NOT NULL,
+        created_at TIMESTAMPTZ DEFAULT now()
+      )
+    `)
+
+    // Deals: one row per company/deal in the arena
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS deals (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        company TEXT NOT NULL,
+        date DATE,
+        poc TEXT,
+        sector TEXT,
+        founder_name TEXT,
+        meeting_date DATE,
+        business_model TEXT,
+        status TEXT,
+        stage TEXT,
+        risk_level TEXT,
+        source_file_name TEXT,
+        exciting_reason TEXT,
+        risks TEXT,
+        conviction_score NUMERIC(4,1),
+        pass_reasons TEXT,
+        watch_reasons TEXT,
+        action_required TEXT,
+        founder_score NUMERIC(4,1),
+        created_at TIMESTAMPTZ DEFAULT now(),
+        updated_at TIMESTAMPTZ DEFAULT now()
+      )
+    `)
+    await client.query(
+      'ALTER TABLE deals ADD COLUMN IF NOT EXISTS founder_name TEXT'
+    )
+    await client.query(
+      'ALTER TABLE deals ADD COLUMN IF NOT EXISTS meeting_date DATE'
+    )
+    await client.query(
+      'ALTER TABLE deals ADD COLUMN IF NOT EXISTS business_model TEXT'
+    )
+    await client.query(
+      'ALTER TABLE deals ADD COLUMN IF NOT EXISTS stage TEXT'
+    )
+    await client.query(
+      'ALTER TABLE deals ADD COLUMN IF NOT EXISTS risk_level TEXT'
+    )
+    await client.query(
+      'ALTER TABLE deals ADD COLUMN IF NOT EXISTS source_file_name TEXT'
+    )
+
+    // Founder scoring breakdown per deal
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS founder_scores (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        deal_id UUID NOT NULL REFERENCES deals(id) ON DELETE CASCADE,
+        resilience NUMERIC(3,1) NOT NULL,
+        ambition NUMERIC(3,1) NOT NULL,
+        self_awareness NUMERIC(3,1) NOT NULL,
+        domain_fit NUMERIC(3,1) NOT NULL,
+        storytelling NUMERIC(3,1) NOT NULL,
+        weighted_score NUMERIC(4,1) NOT NULL,
+        archetype TEXT,
+        evidence_json JSONB,
+        created_at TIMESTAMPTZ DEFAULT now()
+      )
+    `)
+
+    // Founder signals (founder-only traits inferred from transcript)
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS founder_signals (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        deal_id UUID NOT NULL REFERENCES deals(id) ON DELETE CASCADE,
+        education_tier SMALLINT,
+        previous_startup_experience SMALLINT,
+        technical_background SMALLINT,
+        network_strength SMALLINT,
+        social_credibility SMALLINT,
+        created_at TIMESTAMPTZ DEFAULT now()
+      )
+    `)
+
+    // Deal insights: structured JSON blobs per deal/meeting
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS deal_insights (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        deal_id UUID NOT NULL REFERENCES deals(id) ON DELETE CASCADE,
+        meeting_outcome JSONB,
+        founder_pitch JSONB,
+        business_model_signals JSONB,
+        market_signals JSONB,
+        investor_reaction JSONB,
+        supporting_quotes JSONB,
+        raw_payload JSONB,
         created_at TIMESTAMPTZ DEFAULT now()
       )
     `)

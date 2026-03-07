@@ -2,6 +2,8 @@ import React from 'react'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import AppLayout from './layout/AppLayout'
 import AssistantPage from './pages/Assistant'
+import ArenaPage from './pages/Arena'
+import DealsPage from './pages/Deals'
 import LoginPage from './pages/Login'
 import { useAuth } from './context/AuthContext'
 
@@ -33,6 +35,14 @@ function App() {
         <Route
           path="/assistant"
           element={<AssistantLayout><AssistantPage /></AssistantLayout>}
+        />
+        <Route
+          path="/arena"
+          element={<AssistantLayout><ArenaPage /></AssistantLayout>}
+        />
+        <Route
+          path="/deals"
+          element={<AssistantLayout><DealsPage /></AssistantLayout>}
         />
         <Route
           path="/assistant/new"

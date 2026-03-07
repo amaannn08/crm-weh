@@ -8,6 +8,7 @@
     "dev": "nodemon server.js",
     "ingest": "node pipelines/localIngestion.js",
     "ingest:drive": "node pipelines/driveIngestion.js",
+    "ingest:deals": "node scripts/ingestDealsOnce.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
