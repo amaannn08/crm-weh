@@ -190,8 +190,6 @@ Rules:
         err
       )
       if (attempt < MAX_ATTEMPTS) {
-        // Backoff: 1s, 2s
-        // eslint-disable-next-line no-await-in-loop
         await delay(1000 * attempt)
       }
     }

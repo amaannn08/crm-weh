@@ -65,7 +65,6 @@ router.post('/', async (req, res) => {
   }
 })
 
-// List deals (optionally filter later)
 router.get('/', async (_req, res) => {
   try {
     const rows = await sql`
@@ -80,7 +79,6 @@ router.get('/', async (_req, res) => {
   }
 })
 
-// Fetch a single deal with latest founder score, signals and insights
 router.get('/:id', async (req, res) => {
   const { id } = req.params
   try {
@@ -129,7 +127,6 @@ router.get('/:id', async (req, res) => {
   }
 })
 
-// Update deal (partial)
 router.patch('/:id', async (req, res) => {
   const { id } = req.params
   const allowedFields = [
@@ -156,7 +153,6 @@ router.patch('/:id', async (req, res) => {
     return res.status(400).json({ error: 'No valid fields to update' })
   }
 
-  // Build dynamic SET clause using the sql tagged template
   const setFragments = []
   const values = []
   entries.forEach(([key, value], index) => {
@@ -164,7 +160,6 @@ router.patch('/:id', async (req, res) => {
     values.push(value)
   })
 
-  // updated_at = now() as final assignment
   const text = `
     UPDATE deals
     SET ${setFragments.join(', ')}, updated_at = now()
@@ -185,7 +180,6 @@ router.patch('/:id', async (req, res) => {
   }
 })
 
-// Latest founder score only (for modal)
 router.get('/:id/score', async (req, res) => {
   const { id } = req.params
   try {
@@ -220,7 +214,6 @@ router.get('/:id/score', async (req, res) => {
   }
 })
 
-// Run founder scoring from a provided transcript and persist results
 router.post('/:id/score', async (req, res) => {
   const { id } = req.params
   const { transcript } = req.body ?? {}
@@ -249,7 +242,6 @@ router.post('/:id/score', async (req, res) => {
   }
 })
 
-// Latest deal insights only
 router.get('/:id/insights', async (req, res) => {
   const { id } = req.params
   try {
@@ -268,13 +260,11 @@ router.get('/:id/insights', async (req, res) => {
     }
     res.json({ insights })
   } catch (err) {
-    // eslint-disable-next-line no-console
     console.error('Error fetching deal insights', err)
     res.status(500).json({ error: 'Failed to fetch deal insights' })
   }
 })
 
-// Batch-ingest meeting transcripts from backend/docs into meetings, deals and scores
 router.post('/ingest-docs', async (req, res) => {
   const { limit, dryRun } = req.body ?? {}
   try {
@@ -284,7 +274,6 @@ router.post('/ingest-docs', async (req, res) => {
     })
     res.json(result)
   } catch (err) {
-    // eslint-disable-next-line no-console
     console.error('Error ingesting docs', err)
     res.status(500).json({ error: 'Failed to ingest docs' })
   }

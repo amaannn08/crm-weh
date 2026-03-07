@@ -31,7 +31,6 @@ export async function initSchema() {
   try {
     await client.query('CREATE EXTENSION IF NOT EXISTS vector')
 
-    // Meetings: transcript + embedding store
     await client.query(`
       CREATE TABLE IF NOT EXISTS meetings (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -45,7 +44,6 @@ export async function initSchema() {
     await client.query('ALTER TABLE meetings ADD COLUMN IF NOT EXISTS drive_file_id TEXT')
     await client.query('ALTER TABLE meetings ADD COLUMN IF NOT EXISTS source_file_name TEXT')
 
-    // Conversations + messages for the assistant
     await client.query(`
       CREATE TABLE IF NOT EXISTS conversations (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -63,7 +61,6 @@ export async function initSchema() {
       )
     `)
 
-    // Deals: one row per company/deal in the arena
     await client.query(`
       CREATE TABLE IF NOT EXISTS deals (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -108,7 +105,6 @@ export async function initSchema() {
       'ALTER TABLE deals ADD COLUMN IF NOT EXISTS source_file_name TEXT'
     )
 
-    // Founder scoring breakdown per deal
     await client.query(`
       CREATE TABLE IF NOT EXISTS founder_scores (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -125,7 +121,6 @@ export async function initSchema() {
       )
     `)
 
-    // Founder signals (founder-only traits inferred from transcript)
     await client.query(`
       CREATE TABLE IF NOT EXISTS founder_signals (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -139,7 +134,6 @@ export async function initSchema() {
       )
     `)
 
-    // Deal insights: structured JSON blobs per deal/meeting
     await client.query(`
       CREATE TABLE IF NOT EXISTS deal_insights (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
