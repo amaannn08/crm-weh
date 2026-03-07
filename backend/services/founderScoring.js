@@ -53,7 +53,6 @@ export async function scoreFounderFromTranscript({ transcript, extraction }) {
         ? `${transcript.slice(0, MAX_CHARS)}\n\n[TRUNCATED FOR SCORING]`
         : transcript
 
-    // eslint-disable-next-line no-param-reassign
     extraction = await extractDealFromTranscript({ transcript: trimmed })
   }
 

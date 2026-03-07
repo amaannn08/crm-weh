@@ -30,13 +30,13 @@ function parseJsonFromModel(text) {
 }
 
 function extractTextFromResult(result) {
-  // Newer SDKs expose a response.text() helper
+
   if (result?.response && typeof result.response.text === 'function') {
     const value = result.response.text()
     if (typeof value === 'string' && value.trim()) return value
   }
 
-  // Fallback: stitch together text parts from the first candidate
+
   const firstCandidate = result?.candidates?.[0]
   const parts = firstCandidate?.content?.parts
   if (Array.isArray(parts)) {

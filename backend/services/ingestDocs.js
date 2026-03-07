@@ -50,19 +50,15 @@ export async function ingestDocs({ limit, dryRun } = {}) {
     try {
       doc = await readDocxFile(file)
     } catch (err) {
-      // eslint-disable-next-line no-console
       console.warn(`Skipping ${file.name}: failed to read docx - ${err.message}`)
       errors += 1
-      // eslint-disable-next-line no-continue
       continue
     }
 
     const transcript = doc.text?.trim()
     if (!transcript) {
-      // eslint-disable-next-line no-console
       console.warn(`Skipping ${file.name}: empty transcript`)
       skippedEmpty += 1
-      // eslint-disable-next-line no-continue
       continue
     }
 
@@ -71,7 +67,6 @@ export async function ingestDocs({ limit, dryRun } = {}) {
 
       if (dryRun) {
         processed += 1
-        // eslint-disable-next-line no-continue
         continue
       }
 
@@ -85,7 +80,6 @@ export async function ingestDocs({ limit, dryRun } = {}) {
           VALUES (${file.name}, ${file.name}, ${transcript}, ${vectorStr}::vector)
           RETURNING id
         `
-        // eslint-disable-next-line prefer-destructuring
         meetingId = meetingRows[0].id
       }
 
@@ -136,8 +130,7 @@ export async function ingestDocs({ limit, dryRun } = {}) {
             ${file.name}
           )
           RETURNING *
-        `
-        // eslint-disable-next-line prefer-destructuring
+        `   
         dealId = dealRows[0].id
       }
 
@@ -181,12 +174,10 @@ export async function ingestDocs({ limit, dryRun } = {}) {
 
       processed += 1
 
-      // eslint-disable-next-line no-console
       console.log(
         `Ingested meeting ${meetingId} into deal ${dealId} for file ${file.name}`
       )
     } catch (err) {
-      // eslint-disable-next-line no-console
       console.error(`Failed to ingest ${file.name}:`, err)
       errors += 1
     }

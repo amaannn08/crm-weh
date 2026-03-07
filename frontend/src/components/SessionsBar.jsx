@@ -26,6 +26,10 @@ function SessionsBar() {
 
   useEffect(() => {
     fetchConversations()
+    const intervalId = setInterval(fetchConversations, 5000)
+    return () => {
+      clearInterval(intervalId)
+    }
   }, [location.pathname])
 
   const filtered = search.trim()

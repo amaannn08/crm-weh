@@ -4,6 +4,7 @@ import AppLayout from './layout/AppLayout'
 import AssistantPage from './pages/Assistant'
 import ArenaPage from './pages/Arena'
 import DealsPage from './pages/Deals'
+import DealDetailPage from './pages/DealDetail'
 import LoginPage from './pages/Login'
 import { useAuth } from './context/AuthContext'
 
@@ -43,6 +44,10 @@ function App() {
         <Route
           path="/deals"
           element={<AssistantLayout><DealsPage /></AssistantLayout>}
+        />
+        <Route
+          path="/deals/:dealId"
+          element={<AssistantLayout><DealDetailPage /></AssistantLayout>}
         />
         <Route
           path="/assistant/new"

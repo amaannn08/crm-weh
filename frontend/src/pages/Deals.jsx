@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react'
-import { fetchDeals, fetchDealScore } from '../api/deals'
-import DealModal from '../components/DealModal'
+import { useNavigate } from 'react-router-dom'
+import { fetchDeals } from '../api/deals'
 
 const STAGE_FILTERS = ['All stages', 'New', 'Active', 'Evaluation', 'Pass', 'Watch', 'Portfolio']
 
@@ -77,6 +77,7 @@ function DealsTableRow({ deal, onView }) {
 }
 
 function DealsPage() {
+  const navigate = useNavigate()
   const [deals, setDeals] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -85,10 +86,6 @@ function DealsPage() {
   const [stageFilter, setStageFilter] = useState('All stages')
   const [minScore, setMinScore] = useState('0')
   const [industryFilter, setIndustryFilter] = useState('All industries')
-
-  const [selectedDeal, setSelectedDeal] = useState(null)
-  const [selectedScore, setSelectedScore] = useState(null)
-  const [scoreLoading, setScoreLoading] = useState(false)
 
   useEffect(() => {
     let cancelled = false
@@ -162,18 +159,8 @@ function DealsPage() {
     })
   }, [deals, industryFilter, minScore, search, stageFilter])
 
-  const handleViewDeal = async (deal) => {
-    setSelectedDeal(deal)
-    setSelectedScore(null)
-    setScoreLoading(true)
-    try {
-      const data = await fetchDealScore(deal.id)
-      setSelectedScore(data)
-    } catch (_err) {
-      setSelectedScore(null)
-    } finally {
-      setScoreLoading(false)
-    }
+  const handleViewDeal = (deal) => {
+    navigate(`/deals/${deal.id}`)
   }
 
   if (loading) {
@@ -288,17 +275,6 @@ function DealsPage() {
           </table>
         </div>
       </div>
-
-      {selectedDeal && (
-        <DealModal
-          deal={selectedDeal}
-          scoreData={scoreLoading ? null : selectedScore}
-          onClose={() => {
-            setSelectedDeal(null)
-            setSelectedScore(null)
-          }}
-        />
-      )}
     </div>
   )
 }

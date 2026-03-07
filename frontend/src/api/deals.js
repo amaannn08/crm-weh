@@ -11,6 +11,16 @@ export async function fetchDeals() {
   return res.json()
 }
 
+export async function fetchDeal(id) {
+  const res = await fetch(dealUrl(id), {
+    headers: apiHeaders()
+  })
+  if (!res.ok) {
+    throw new Error('Failed to fetch deal')
+  }
+  return res.json()
+}
+
 export async function createDeal(payload) {
   const res = await fetch(routes.deals, {
     method: 'POST',
