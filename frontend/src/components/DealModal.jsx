@@ -42,7 +42,7 @@ function DealModal({ deal, scoreData, onClose }) {
   const score = scoreData?.score ?? null
   const signals = scoreData?.signals ?? null
 
-  const weightedScore = score?.weighted_score ?? deal.founder_score ?? deal.conviction_score
+  const weightedScore = score?.weighted_score ?? deal.founder_score ?? null
 
   return (
     <AnimatePresence>
@@ -107,21 +107,12 @@ function DealModal({ deal, scoreData, onClose }) {
                 <div className="flex items-baseline justify-between">
                   <div>
                     <p className="text-xs font-semibold uppercase tracking-wide text-neutral-400">
-                      Conviction score
+                      Founder score
                     </p>
                     <p className="mt-1 text-3xl font-semibold text-white">
                       {weightedScore != null ? weightedScore.toFixed(1) : '--'}
                     </p>
                   </div>
-                  {deal.conviction_score != null &&
-                    weightedScore !== deal.conviction_score && (
-                      <p className="text-xs text-neutral-400">
-                        Deal score:{' '}
-                        <span className="font-medium text-neutral-100">
-                          {Number(deal.conviction_score).toFixed(1)}
-                        </span>
-                      </p>
-                    )}
                 </div>
               </div>
 

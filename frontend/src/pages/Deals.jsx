@@ -26,7 +26,7 @@ function riskBadge(riskLevel) {
 function DealsTableRow({ deal, onView }) {
   const stage = deal.stage || deal.status || 'New'
   const lastMeeting = deal.meeting_date || deal.date || null
-  const score = deal.conviction_score ?? deal.founder_score ?? null
+  const score = deal.founder_score ?? null
 
   return (
     <tr className="border-b border-neutral-800/80 hover:bg-neutral-900/60 transition-colors">
@@ -150,7 +150,7 @@ function DealsPage() {
         }
       }
 
-      const score = deal.conviction_score ?? deal.founder_score
+      const score = deal.founder_score
       if (score != null && Number(score) < min) {
         return false
       }

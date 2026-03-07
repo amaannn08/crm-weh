@@ -1,7 +1,7 @@
 import { sql } from '../db/neon.js'
 import { extractDealFromTranscript } from './dealExtraction.js'
 
-function clampScore(value) {
+export function clampScore(value) {
   const num = Number(value)
   if (Number.isNaN(num)) return 0
   if (num < 0) return 0
@@ -17,7 +17,7 @@ const BASE_WEIGHTS = {
   storytelling: 0.15
 }
 
-function computeWeightedScore(scores) {
+export function computeWeightedScore(scores) {
   const entries = Object.entries(BASE_WEIGHTS).map(([key, weight]) => {
     const value = clampScore(scores[key])
     return { key, weight, value }

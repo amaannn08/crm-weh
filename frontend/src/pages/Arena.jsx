@@ -15,9 +15,9 @@ function DealCard({ deal, onClick }) {
         <h3 className="truncate text-sm font-semibold text-neutral-50">
           {deal.company}
         </h3>
-        {deal.conviction_score != null && (
+        {deal.founder_score != null && (
           <span className="text-xs font-medium text-emerald-400">
-            {Number(deal.conviction_score).toFixed(1)}
+            {Number(deal.founder_score).toFixed(1)}
           </span>
         )}
       </div>
