@@ -15,9 +15,9 @@ function DealCard({ deal, onClick }) {
         <h3 className="truncate text-sm font-semibold text-neutral-50">
           {deal.company}
         </h3>
-        {deal.founder_score != null && (
+        {deal.founder_final_score != null && (
           <span className="text-xs font-medium text-emerald-400">
-            {Number(deal.founder_score).toFixed(1)}
+            {Number(deal.founder_final_score).toFixed(1)}
           </span>
         )}
       </div>
@@ -77,7 +77,7 @@ function ArenaPage() {
         if (!cancelled) {
           setDeals(data)
         }
-      } catch (err) {
+      } catch {
         if (!cancelled) {
           setError('Failed to load deals')
         }
@@ -100,7 +100,7 @@ function ArenaPage() {
     try {
       const data = await fetchDealScore(deal.id)
       setSelectedScore(data)
-    } catch (_err) {
+    } catch {
       setSelectedScore(null)
     } finally {
       setScoreLoading(false)

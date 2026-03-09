@@ -37,7 +37,6 @@ function DealDetailPage() {
 
   const [deal, setDeal] = useState(null)
   const [scoreData, setScoreData] = useState(null)
-  const [insights, setInsights] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
@@ -54,9 +53,13 @@ function DealDetailPage() {
         const data = await fetchDeal(dealId)
         if (cancelled) return
         setDeal(data.deal)
-        setScoreData({ score: data.score, signals: data.signals })
-        setInsights(data.insights || null)
-        const score = data.score ?? null
+        setScoreData({
+          softScore: data.softScore,
+          hardScore: data.hardScore,
+          finalScore: data.finalScore
+        })
+        const softScore = data.softScore ?? null
+        const hardScore = data.hardScore ?? null
         setForm({
           company: data.deal.company || '',
           date: formatDateForInput(data.deal.date || data.deal.meeting_date),
@@ -69,26 +72,42 @@ function DealDetailPage() {
           watch_reasons: data.deal.watch_reasons || '',
           action_required: data.deal.action_required || '',
           resilience:
-            score?.resilience != null ? String(Number(score.resilience)) : '',
+            softScore?.resilience != null
+              ? String(Number(softScore.resilience))
+              : '',
           ambition:
-            score?.ambition != null ? String(Number(score.ambition)) : '',
+            softScore?.ambition != null ? String(Number(softScore.ambition)) : '',
           self_awareness:
-            score?.self_awareness != null
-              ? String(Number(score.self_awareness))
+            softScore?.self_awareness != null
+              ? String(Number(softScore.self_awareness))
               : '',
           domain_fit:
-            score?.domain_fit != null ? String(Number(score.domain_fit)) : '',
+            softScore?.domain_fit != null
+              ? String(Number(softScore.domain_fit))
+              : '',
           storytelling:
-            score?.storytelling != null
-              ? String(Number(score.storytelling))
+            softScore?.storytelling != null
+              ? String(Number(softScore.storytelling))
               : '',
-          weighted_score:
-            score?.weighted_score != null
-              ? String(Number(score.weighted_score))
+          education_tier:
+            hardScore?.education_tier != null
+              ? String(Number(hardScore.education_tier))
               : '',
-          archetype: score?.archetype ?? ''
+          domain_work_experience:
+            hardScore?.domain_work_experience != null
+              ? String(Number(hardScore.domain_work_experience))
+              : '',
+          seniority_of_roles:
+            hardScore?.seniority_of_roles != null
+              ? String(Number(hardScore.seniority_of_roles))
+              : '',
+          previous_startup_experience:
+            hardScore?.previous_startup_experience != null
+              ? String(Number(hardScore.previous_startup_experience))
+              : '',
+          archetype: softScore?.archetype ?? ''
         })
-      } catch (_err) {
+      } catch {
         if (!cancelled) {
           setError('Failed to load deal')
         }
@@ -131,13 +150,17 @@ function DealDetailPage() {
       }
 
       const hasScoreValues =
-        scoreData?.score ||
+        scoreData?.softScore ||
+        scoreData?.hardScore ||
         (form.resilience ?? '') !== '' ||
         (form.ambition ?? '') !== '' ||
         (form.self_awareness ?? '') !== '' ||
         (form.domain_fit ?? '') !== '' ||
         (form.storytelling ?? '') !== '' ||
-        (form.weighted_score ?? '') !== '' ||
+        (form.education_tier ?? '') !== '' ||
+        (form.domain_work_experience ?? '') !== '' ||
+        (form.seniority_of_roles ?? '') !== '' ||
+        (form.previous_startup_experience ?? '') !== '' ||
         (form.archetype ?? '').trim() !== ''
       if (hasScoreValues) {
         patch.resilience =
@@ -154,10 +177,22 @@ function DealDetailPage() {
           form.storytelling === ''
             ? null
             : clampScoreValue(form.storytelling)
-        patch.weighted_score =
-          form.weighted_score === ''
+        patch.education_tier =
+          form.education_tier === ''
             ? null
-            : clampScoreValue(form.weighted_score)
+            : clampScoreValue(form.education_tier)
+        patch.domain_work_experience =
+          form.domain_work_experience === ''
+            ? null
+            : clampScoreValue(form.domain_work_experience)
+        patch.seniority_of_roles =
+          form.seniority_of_roles === ''
+            ? null
+            : clampScoreValue(form.seniority_of_roles)
+        patch.previous_startup_experience =
+          form.previous_startup_experience === ''
+            ? null
+            : clampScoreValue(form.previous_startup_experience)
         patch.archetype =
           form.archetype?.trim() === '' ? null : form.archetype?.trim()
       }
@@ -165,11 +200,12 @@ function DealDetailPage() {
       const updated = await updateDeal(deal.id, patch)
       setDeal(updated.deal)
       setScoreData({
-        score: updated.score ?? null,
-        signals: updated.signals ?? scoreData?.signals ?? null
+        softScore: updated.softScore ?? null,
+        hardScore: updated.hardScore ?? null,
+        finalScore: updated.finalScore ?? null
       })
       setIsEditing(false)
-    } catch (_err) {
+    } catch {
       setError('Failed to save changes')
     } finally {
       setSaving(false)
@@ -204,11 +240,13 @@ function DealDetailPage() {
   }
 
   const finalScore =
-    scoreData?.score?.weighted_score != null
-      ? Number(scoreData.score.weighted_score)
-      : deal.founder_score != null
-          ? Number(deal.founder_score)
+    scoreData?.finalScore?.final_score != null
+      ? Number(scoreData.finalScore.final_score)
+      : deal.founder_final_score != null
+          ? Number(deal.founder_final_score)
           : null
+  const ddRecommendation =
+    scoreData?.finalScore?.dd_recommendation ?? deal.dd_recommendation ?? null
 
   return (
     <div className="flex h-full flex-col gap-4 py-4">
@@ -244,8 +282,7 @@ function DealDetailPage() {
               Score summary
             </h2>
             <p className="text-sm text-neutral-100 whitespace-pre-wrap">
-              {deal.exciting_reason ||
-                'Why this feels interesting — rolled up across the five founder pillars.'}
+              {deal.exciting_reason || 'Why this feels interesting.'}
             </p>
           </div>
           <div className="flex flex-col items-end gap-2">
@@ -255,9 +292,9 @@ function DealDetailPage() {
             <div className="text-3xl font-semibold text-neutral-50">
               {finalScore != null ? finalScore.toFixed(1) : '--'}
             </div>
-            {scoreData?.score && (
+            {scoreData?.finalScore && (
               <div className="text-[11px] text-neutral-500">
-                Founder score {Number(scoreData.score.weighted_score).toFixed(1)} / 10
+                DD recommendation: {ddRecommendation || 'Not set'}
               </div>
             )}
           </div>
@@ -344,15 +381,57 @@ function DealDetailPage() {
               </div>
               <div className="space-y-1">
                 <label className="text-xs font-semibold uppercase tracking-wide text-neutral-400">
-                  Weighted score (0–10)
+                  Education tier
                 </label>
                 <input
                   type="number"
                   min="0"
                   max="10"
                   step="0.1"
-                  value={form.weighted_score ?? ''}
-                  onChange={handleChange('weighted_score')}
+                  value={form.education_tier ?? ''}
+                  onChange={handleChange('education_tier')}
+                  className="w-full rounded-lg border border-neutral-800 bg-neutral-900 px-2 py-1.5 text-sm text-neutral-100 focus:border-neutral-500 focus:outline-none"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-semibold uppercase tracking-wide text-neutral-400">
+                  Domain work experience
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  max="10"
+                  step="0.1"
+                  value={form.domain_work_experience ?? ''}
+                  onChange={handleChange('domain_work_experience')}
+                  className="w-full rounded-lg border border-neutral-800 bg-neutral-900 px-2 py-1.5 text-sm text-neutral-100 focus:border-neutral-500 focus:outline-none"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-semibold uppercase tracking-wide text-neutral-400">
+                  Seniority of roles
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  max="10"
+                  step="0.1"
+                  value={form.seniority_of_roles ?? ''}
+                  onChange={handleChange('seniority_of_roles')}
+                  className="w-full rounded-lg border border-neutral-800 bg-neutral-900 px-2 py-1.5 text-sm text-neutral-100 focus:border-neutral-500 focus:outline-none"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-semibold uppercase tracking-wide text-neutral-400">
+                  Previous startup experience
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  max="10"
+                  step="0.1"
+                  value={form.previous_startup_experience ?? ''}
+                  onChange={handleChange('previous_startup_experience')}
                   className="w-full rounded-lg border border-neutral-800 bg-neutral-900 px-2 py-1.5 text-sm text-neutral-100 focus:border-neutral-500 focus:outline-none"
                 />
               </div>
@@ -375,48 +454,62 @@ function DealDetailPage() {
                 <div className="flex justify-between gap-2 sm:gap-4">
                   <span className="text-neutral-400">Resilience</span>
                   <span className="font-medium text-neutral-50">
-                    {scoreData?.score?.resilience != null
-                      ? Number(scoreData.score.resilience).toFixed(1)
+                    {scoreData?.softScore?.resilience != null
+                      ? Number(scoreData.softScore.resilience).toFixed(1)
                       : '–'}
                   </span>
                 </div>
                 <div className="flex justify-between gap-2 sm:gap-4">
                   <span className="text-neutral-400">Ambition</span>
                   <span className="font-medium text-neutral-50">
-                    {scoreData?.score?.ambition != null
-                      ? Number(scoreData.score.ambition).toFixed(1)
+                    {scoreData?.softScore?.ambition != null
+                      ? Number(scoreData.softScore.ambition).toFixed(1)
                       : '–'}
                   </span>
                 </div>
                 <div className="flex justify-between gap-2 sm:gap-4">
                   <span className="text-neutral-400">Self awareness</span>
                   <span className="font-medium text-neutral-50">
-                    {scoreData?.score?.self_awareness != null
-                      ? Number(scoreData.score.self_awareness).toFixed(1)
+                    {scoreData?.softScore?.self_awareness != null
+                      ? Number(scoreData.softScore.self_awareness).toFixed(1)
                       : '–'}
                   </span>
                 </div>
                 <div className="flex justify-between gap-2 sm:gap-4">
                   <span className="text-neutral-400">Domain fit</span>
                   <span className="font-medium text-neutral-50">
-                    {scoreData?.score?.domain_fit != null
-                      ? Number(scoreData.score.domain_fit).toFixed(1)
+                    {scoreData?.softScore?.domain_fit != null
+                      ? Number(scoreData.softScore.domain_fit).toFixed(1)
                       : '–'}
                   </span>
                 </div>
                 <div className="flex justify-between gap-2 sm:gap-4">
                   <span className="text-neutral-400">Storytelling</span>
                   <span className="font-medium text-neutral-50">
-                    {scoreData?.score?.storytelling != null
-                      ? Number(scoreData.score.storytelling).toFixed(1)
+                    {scoreData?.softScore?.storytelling != null
+                      ? Number(scoreData.softScore.storytelling).toFixed(1)
                       : '–'}
                   </span>
                 </div>
               </div>
               <div className="border-t border-neutral-800 pt-2 mt-2">
+                <span className="text-neutral-400">Hard score</span>
+                <span className="ml-2 font-medium text-neutral-50">
+                  {scoreData?.hardScore?.hard_weighted_score != null
+                    ? Number(scoreData.hardScore.hard_weighted_score).toFixed(1)
+                    : 'Not set'}
+                </span>
+              </div>
+              <div className="border-t border-neutral-800 pt-2 mt-2">
                 <span className="text-neutral-400">Archetype</span>
                 <span className="ml-2 font-medium text-neutral-50">
-                  {scoreData?.score?.archetype || 'Not set'}
+                  {scoreData?.softScore?.archetype || 'Not set'}
+                </span>
+              </div>
+              <div className="border-t border-neutral-800 pt-2 mt-2">
+                <span className="text-neutral-400">DD recommendation</span>
+                <span className="ml-2 font-medium text-neutral-50">
+                  {ddRecommendation || 'Not set'}
                 </span>
               </div>
             </div>
@@ -457,30 +550,50 @@ function DealDetailPage() {
                         watch_reasons: deal.watch_reasons || '',
                         action_required: deal.action_required || '',
                         resilience:
-                          scoreData?.score?.resilience != null
-                            ? String(Number(scoreData.score.resilience))
+                          scoreData?.softScore?.resilience != null
+                            ? String(Number(scoreData.softScore.resilience))
                             : '',
                         ambition:
-                          scoreData?.score?.ambition != null
-                            ? String(Number(scoreData.score.ambition))
+                          scoreData?.softScore?.ambition != null
+                            ? String(Number(scoreData.softScore.ambition))
                             : '',
                         self_awareness:
-                          scoreData?.score?.self_awareness != null
-                            ? String(Number(scoreData.score.self_awareness))
+                          scoreData?.softScore?.self_awareness != null
+                            ? String(Number(scoreData.softScore.self_awareness))
                             : '',
                         domain_fit:
-                          scoreData?.score?.domain_fit != null
-                            ? String(Number(scoreData.score.domain_fit))
+                          scoreData?.softScore?.domain_fit != null
+                            ? String(Number(scoreData.softScore.domain_fit))
                             : '',
                         storytelling:
-                          scoreData?.score?.storytelling != null
-                            ? String(Number(scoreData.score.storytelling))
+                          scoreData?.softScore?.storytelling != null
+                            ? String(Number(scoreData.softScore.storytelling))
                             : '',
-                        weighted_score:
-                          scoreData?.score?.weighted_score != null
-                            ? String(Number(scoreData.score.weighted_score))
+                        education_tier:
+                          scoreData?.hardScore?.education_tier != null
+                            ? String(Number(scoreData.hardScore.education_tier))
                             : '',
-                        archetype: scoreData?.score?.archetype ?? ''
+                        domain_work_experience:
+                          scoreData?.hardScore?.domain_work_experience != null
+                            ? String(
+                                Number(scoreData.hardScore.domain_work_experience)
+                              )
+                            : '',
+                        seniority_of_roles:
+                          scoreData?.hardScore?.seniority_of_roles != null
+                            ? String(Number(scoreData.hardScore.seniority_of_roles))
+                            : '',
+                        previous_startup_experience:
+                          scoreData?.hardScore?.previous_startup_experience !=
+                          null
+                            ? String(
+                                Number(
+                                  scoreData.hardScore
+                                    .previous_startup_experience
+                                )
+                              )
+                            : '',
+                        archetype: scoreData?.softScore?.archetype ?? ''
                       })
                     }}
                     className="rounded-full border border-neutral-700 bg-neutral-900 px-3 py-1 text-xs font-medium text-neutral-100 hover:bg-neutral-800"
@@ -578,6 +691,9 @@ function DealDetailPage() {
                 <DisplayField label="Status">{deal.status || 'New'}</DisplayField>
                 <DisplayField label="Founder score">
                   {finalScore != null ? finalScore.toFixed(1) : null}
+                </DisplayField>
+                <DisplayField label="DD recommendation">
+                  {ddRecommendation}
                 </DisplayField>
               </>
             )}

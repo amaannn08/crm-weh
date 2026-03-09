@@ -1,7 +1,7 @@
 import { sql, formatVector } from '../db/neon.js'
 import { embed } from './embeddings.js'
 import { extractDealFromTranscript } from './dealExtraction.js'
-import { scoreFounderFromTranscript, saveFounderScore } from './founderScoring.js'
+import { scoreAndSaveFounder } from './founderScoring.js'
 import { getDefaultDocsDir, listDocxFiles, readDocxFile } from './docxReader.js'
 
 async function findExistingMeeting(fileName) {
@@ -134,19 +134,10 @@ export async function ingestDocs({ limit, dryRun } = {}) {
         dealId = dealRows[0].id
       }
 
-      const scoring = await scoreFounderFromTranscript({
+      await scoreAndSaveFounder({
+        dealId,
         transcript,
         extraction
-      })
-
-      await saveFounderScore({
-        dealId,
-        scores: scoring.scores,
-        weightedScore: scoring.weightedScore,
-        archetype: scoring.archetype,
-        evidence: scoring.evidence,
-        founderSignals: scoring.founderSignals,
-        rawPayload: scoring.raw
       })
 
       await sql`
@@ -161,7 +152,7 @@ export async function ingestDocs({ limit, dryRun } = {}) {
           raw_payload
         )
         VALUES (
-          ${deal.id},
+          ${dealId},
           ${JSON.stringify(extraction.meeting_outcome ?? {})},
           ${JSON.stringify(extraction.founder_pitch ?? {})},
           ${JSON.stringify(extraction.business_model_signals ?? {})},

@@ -120,10 +120,9 @@ Return a single JSON object with EXACTLY this structure and key names:
 
   "founder_quality_signals": {
     "education_tier": 0,
-    "previous_startup_experience": 0,
-    "technical_background": 0,
-    "network_strength": 0,
-    "social_credibility": 0
+    "domain_work_experience": 0,
+    "seniority_of_roles": 0,
+    "previous_startup_experience": 0
   },
 
   "business_model_signals": {

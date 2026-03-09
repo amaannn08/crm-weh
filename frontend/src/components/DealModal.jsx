@@ -38,22 +38,24 @@ function Section({ title, children }) {
 
 function DealModal({ deal, scoreData, onClose }) {
   if (!deal) return null
+  const MotionDiv = motion.div
 
-  const score = scoreData?.score ?? null
-  const signals = scoreData?.signals ?? null
+  const softScore = scoreData?.softScore ?? null
+  const hardScore = scoreData?.hardScore ?? null
+  const finalScore = scoreData?.finalScore ?? null
 
-  const weightedScore = score?.weighted_score ?? deal.founder_score ?? null
+  const weightedScore = finalScore?.final_score ?? deal.founder_final_score ?? null
 
   return (
     <AnimatePresence>
-      <motion.div
+      <MotionDiv
         className="fixed inset-0 z-40 flex items-center justify-center bg-black/60 backdrop-blur-sm"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         onClick={onClose}
       >
-        <motion.div
+        <MotionDiv
           className="relative max-h-[90vh] w-full max-w-3xl overflow-hidden rounded-2xl border border-neutral-800 bg-[#111111] shadow-2xl"
           initial={{ opacity: 0, y: 20, scale: 0.97 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -107,10 +109,13 @@ function DealModal({ deal, scoreData, onClose }) {
                 <div className="flex items-baseline justify-between">
                   <div>
                     <p className="text-xs font-semibold uppercase tracking-wide text-neutral-400">
-                      Founder score
+                      Final founder score
                     </p>
                     <p className="mt-1 text-3xl font-semibold text-white">
                       {weightedScore != null ? weightedScore.toFixed(1) : '--'}
+                    </p>
+                    <p className="mt-1 text-xs text-neutral-400">
+                      DD: {finalScore?.dd_recommendation || deal.dd_recommendation || 'Not set'}
                     </p>
                   </div>
                 </div>
@@ -130,19 +135,19 @@ function DealModal({ deal, scoreData, onClose }) {
             <div className="space-y-4">
               <div className="rounded-xl border border-neutral-800 bg-neutral-900/70 px-4 py-3">
                 <h3 className="mb-3 text-xs font-semibold uppercase tracking-wide text-neutral-400">
-                  Founder score breakdown
+                  Soft score breakdown
                 </h3>
                 <div className="space-y-2">
-                  <ScoreRow label="Resilience" value={score?.resilience} />
-                  <ScoreRow label="Ambition" value={score?.ambition} />
+                  <ScoreRow label="Resilience" value={softScore?.resilience} />
+                  <ScoreRow label="Ambition" value={softScore?.ambition} />
                   <ScoreRow
                     label="Self awareness"
-                    value={score?.self_awareness}
+                    value={softScore?.self_awareness}
                   />
-                  <ScoreRow label="Domain fit" value={score?.domain_fit} />
+                  <ScoreRow label="Domain fit" value={softScore?.domain_fit} />
                   <ScoreRow
                     label="Storytelling"
-                    value={score?.storytelling}
+                    value={softScore?.storytelling}
                   />
                 </div>
                 <div className="mt-4 border-t border-neutral-800 pt-3">
@@ -150,47 +155,39 @@ function DealModal({ deal, scoreData, onClose }) {
                     Archetype
                   </p>
                   <p className="mt-1 text-sm font-medium text-neutral-50">
-                    {score?.archetype || 'Not scored yet'}
+                    {softScore?.archetype || 'Not scored yet'}
                   </p>
                 </div>
               </div>
 
-              {signals && (
+              {hardScore && (
                 <div className="rounded-xl border border-neutral-800 bg-neutral-900/70 px-4 py-3">
                   <h3 className="mb-3 text-xs font-semibold uppercase tracking-wide text-neutral-400">
-                    Founder signals
+                    Hard score breakdown
                   </h3>
                   <div className="grid grid-cols-2 gap-2 text-xs text-neutral-200">
                     <div className="space-y-1">
                       <p className="text-neutral-400">Education tier</p>
                       <p className="font-medium">
-                        {signals.education_tier ?? '-'}
+                        {hardScore.education_tier ?? '-'}
                       </p>
                     </div>
                     <div className="space-y-1">
-                      <p className="text-neutral-400">
-                        Previous startup experience
-                      </p>
+                      <p className="text-neutral-400">Domain work experience</p>
                       <p className="font-medium">
-                        {signals.previous_startup_experience ?? '-'}
+                        {hardScore.domain_work_experience ?? '-'}
                       </p>
                     </div>
                     <div className="space-y-1">
-                      <p className="text-neutral-400">Technical background</p>
+                      <p className="text-neutral-400">Seniority of roles</p>
                       <p className="font-medium">
-                        {signals.technical_background ?? '-'}
+                        {hardScore.seniority_of_roles ?? '-'}
                       </p>
                     </div>
                     <div className="space-y-1">
-                      <p className="text-neutral-400">Network strength</p>
+                      <p className="text-neutral-400">Previous startup experience</p>
                       <p className="font-medium">
-                        {signals.network_strength ?? '-'}
-                      </p>
-                    </div>
-                    <div className="space-y-1">
-                      <p className="text-neutral-400">Social credibility</p>
-                      <p className="font-medium">
-                        {signals.social_credibility ?? '-'}
+                        {hardScore.previous_startup_experience ?? '-'}
                       </p>
                     </div>
                   </div>
@@ -198,8 +195,8 @@ function DealModal({ deal, scoreData, onClose }) {
               )}
             </div>
           </div>
-        </motion.div>
-      </motion.div>
+        </MotionDiv>
+      </MotionDiv>
     </AnimatePresence>
   )
 }

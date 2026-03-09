@@ -9,6 +9,8 @@
     "ingest": "node pipelines/localIngestion.js",
     "ingest:drive": "node pipelines/driveIngestion.js",
     "ingest:deals": "node scripts/ingestDealsOnce.js",
+    "backfill:founder-scores": "node scripts/backfillFounderScores.js",
+    "repair:nan-founder-scores": "node scripts/repairNaNFounderScores.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],

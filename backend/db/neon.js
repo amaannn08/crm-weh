@@ -82,6 +82,10 @@ export async function initSchema() {
         watch_reasons TEXT,
         action_required TEXT,
         founder_score NUMERIC(4,1),
+        founder_soft_score NUMERIC(4,1),
+        founder_hard_score NUMERIC(4,1),
+        founder_final_score NUMERIC(4,1),
+        dd_recommendation TEXT,
         created_at TIMESTAMPTZ DEFAULT now(),
         updated_at TIMESTAMPTZ DEFAULT now()
       )
@@ -103,6 +107,18 @@ export async function initSchema() {
     )
     await client.query(
       'ALTER TABLE deals ADD COLUMN IF NOT EXISTS source_file_name TEXT'
+    )
+    await client.query(
+      'ALTER TABLE deals ADD COLUMN IF NOT EXISTS founder_soft_score NUMERIC(4,1)'
+    )
+    await client.query(
+      'ALTER TABLE deals ADD COLUMN IF NOT EXISTS founder_hard_score NUMERIC(4,1)'
+    )
+    await client.query(
+      'ALTER TABLE deals ADD COLUMN IF NOT EXISTS founder_final_score NUMERIC(4,1)'
+    )
+    await client.query(
+      'ALTER TABLE deals ADD COLUMN IF NOT EXISTS dd_recommendation TEXT'
     )
 
     await client.query(`
@@ -130,6 +146,46 @@ export async function initSchema() {
         technical_background SMALLINT,
         network_strength SMALLINT,
         social_credibility SMALLINT,
+        created_at TIMESTAMPTZ DEFAULT now()
+      )
+    `)
+
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS founder_soft_scores (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        deal_id UUID NOT NULL REFERENCES deals(id) ON DELETE CASCADE,
+        resilience NUMERIC(3,1) NOT NULL,
+        ambition NUMERIC(3,1) NOT NULL,
+        self_awareness NUMERIC(3,1) NOT NULL,
+        domain_fit NUMERIC(3,1) NOT NULL,
+        storytelling NUMERIC(3,1) NOT NULL,
+        soft_weighted_score NUMERIC(4,1) NOT NULL,
+        archetype TEXT,
+        evidence_json JSONB,
+        created_at TIMESTAMPTZ DEFAULT now()
+      )
+    `)
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS founder_hard_scores (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        deal_id UUID NOT NULL REFERENCES deals(id) ON DELETE CASCADE,
+        education_tier NUMERIC(3,1),
+        domain_work_experience NUMERIC(3,1),
+        seniority_of_roles NUMERIC(3,1),
+        previous_startup_experience NUMERIC(3,1),
+        hard_weighted_score NUMERIC(4,1) NOT NULL,
+        created_at TIMESTAMPTZ DEFAULT now()
+      )
+    `)
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS founder_final_scores (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        deal_id UUID NOT NULL REFERENCES deals(id) ON DELETE CASCADE,
+        hard_weighted_score NUMERIC(4,1) NOT NULL,
+        soft_weighted_score NUMERIC(4,1) NOT NULL,
+        final_score NUMERIC(4,1) NOT NULL,
+        dd_recommendation TEXT NOT NULL,
+        scored_at TIMESTAMPTZ DEFAULT now(),
         created_at TIMESTAMPTZ DEFAULT now()
       )
     `)
