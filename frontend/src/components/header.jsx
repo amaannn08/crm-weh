@@ -1,38 +1,34 @@
-import React, { useEffect, useRef, useState } from 'react'
-import { NavLink } from 'react-router-dom'
+import React from 'react'
+import { NavLink, useNavigate } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
 
 function Header() {
-  const [showHeader, setShowHeader] = useState(true)
-  const lastScrollY = useRef(0)
+  const { logout } = useAuth()
+  const navigate = useNavigate()
 
-  useEffect(() => {
-    const handleScroll = () => {
-      const currentScrollY = window.scrollY
-      if (currentScrollY > lastScrollY.current && currentScrollY > 0) {
-        setShowHeader(false)
-      } else {
-        setShowHeader(true)
-      }
-      lastScrollY.current = currentScrollY
-    }
-    window.addEventListener('scroll', handleScroll, { passive: true })
-    return () => window.removeEventListener('scroll', handleScroll)
-  }, [])
+  const handleLogout = () => {
+    logout()
+    navigate('/login', { replace: true })
+  }
 
   const navLinkBase =
     'text-sm font-medium px-2 py-1 rounded-md transition-colors hover:text-white hover:bg-neutral-700'
 
   return (
-    <header
-      className={`fixed top-0 left-0 right-0 z-50 border-b h-20 border-neutral-800 bg-[#171717] backdrop-blur transform transition-transform duration-300 ease-out ${
-        showHeader ? 'translate-y-0' : '-translate-y-full'
-      }`}
-    >
+    <header className="border-b h-20 border-neutral-800 bg-[#171717] backdrop-blur z-10">
       <div className="mx-auto flex w-full h-full items-center gap-6 px-6">
         <div className="flex items-center gap-2">
           <img src="/images/logo-white.svg" alt="WH Logo" className="w-24" />
         </div>
         <nav className="ml-auto flex items-center gap-2">
+          <NavLink
+            to="/deals"
+            className={({ isActive }) =>
+              `${navLinkBase} ${isActive ? 'text-xl text-white' : 'text-neutral-400'}`
+            }
+          >
+            Deals
+          </NavLink>
           <NavLink
             to="/assistant"
             className={({ isActive }) =>
@@ -41,6 +37,13 @@ function Header() {
           >
             Assistant
           </NavLink>
+          <button
+            type="button"
+            onClick={handleLogout}
+            className={`${navLinkBase} text-neutral-400`}
+          >
+            Log out
+          </button>
         </nav>
       </div>
     </header>
