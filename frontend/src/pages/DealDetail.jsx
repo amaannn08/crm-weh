@@ -66,11 +66,6 @@ function DealDetailPage() {
           poc: data.deal.poc || '',
           sector: data.deal.sector || '',
           status: data.deal.status || 'New',
-          exciting_reason: data.deal.exciting_reason || '',
-          risks: data.deal.risks || '',
-          pass_reasons: data.deal.pass_reasons || '',
-          watch_reasons: data.deal.watch_reasons || '',
-          action_required: data.deal.action_required || '',
           resilience:
             softScore?.resilience != null
               ? String(Number(softScore.resilience))
@@ -136,12 +131,7 @@ function DealDetailPage() {
         company: form.company || deal.company,
         poc: form.poc || null,
         sector: form.sector || null,
-        status: form.status || null,
-        exciting_reason: form.exciting_reason || null,
-        risks: form.risks || null,
-        pass_reasons: form.pass_reasons || null,
-        watch_reasons: form.watch_reasons || null,
-        action_required: form.action_required || null
+        status: form.status || null
       }
 
       if (form.date) {
@@ -247,6 +237,52 @@ function DealDetailPage() {
           : null
   const ddRecommendation =
     scoreData?.finalScore?.dd_recommendation ?? deal.dd_recommendation ?? null
+  const resetFormFromCurrent = () => {
+    setForm({
+      company: deal.company || '',
+      date: formatDateForInput(deal.date || deal.meeting_date),
+      poc: deal.poc || '',
+      sector: deal.sector || '',
+      status: deal.status || 'New',
+      resilience:
+        scoreData?.softScore?.resilience != null
+          ? String(Number(scoreData.softScore.resilience))
+          : '',
+      ambition:
+        scoreData?.softScore?.ambition != null
+          ? String(Number(scoreData.softScore.ambition))
+          : '',
+      self_awareness:
+        scoreData?.softScore?.self_awareness != null
+          ? String(Number(scoreData.softScore.self_awareness))
+          : '',
+      domain_fit:
+        scoreData?.softScore?.domain_fit != null
+          ? String(Number(scoreData.softScore.domain_fit))
+          : '',
+      storytelling:
+        scoreData?.softScore?.storytelling != null
+          ? String(Number(scoreData.softScore.storytelling))
+          : '',
+      education_tier:
+        scoreData?.hardScore?.education_tier != null
+          ? String(Number(scoreData.hardScore.education_tier))
+          : '',
+      domain_work_experience:
+        scoreData?.hardScore?.domain_work_experience != null
+          ? String(Number(scoreData.hardScore.domain_work_experience))
+          : '',
+      seniority_of_roles:
+        scoreData?.hardScore?.seniority_of_roles != null
+          ? String(Number(scoreData.hardScore.seniority_of_roles))
+          : '',
+      previous_startup_experience:
+        scoreData?.hardScore?.previous_startup_experience != null
+          ? String(Number(scoreData.hardScore.previous_startup_experience))
+          : '',
+      archetype: scoreData?.softScore?.archetype ?? ''
+    })
+  }
 
   return (
     <div className="flex h-full flex-col gap-4 py-4">
@@ -282,7 +318,7 @@ function DealDetailPage() {
               Score summary
             </h2>
             <p className="text-sm text-neutral-100 whitespace-pre-wrap">
-              {deal.exciting_reason || 'Why this feels interesting.'}
+              Founder quality and recommendation summary.
             </p>
           </div>
           <div className="flex flex-col items-end gap-2">
@@ -301,9 +337,43 @@ function DealDetailPage() {
         </div>
 
         <div className="rounded-2xl border border-neutral-900 bg-[#121212] p-4 space-y-4">
-          <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-400">
-            Founder score breakdown
-          </h2>
+          <div className="flex items-center justify-between gap-2">
+            <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-400">
+              Founder score breakdown
+            </h2>
+            <div className="flex items-center gap-2">
+              {isEditing ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={handleSave}
+                    disabled={saving}
+                    className="rounded-full bg-neutral-100 px-3 py-1 text-xs font-medium text-neutral-900 hover:bg-white disabled:opacity-60"
+                  >
+                    {saving ? 'Saving…' : 'Save'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsEditing(false)
+                      resetFormFromCurrent()
+                    }}
+                    className="rounded-full border border-neutral-700 bg-neutral-900 px-3 py-1 text-xs font-medium text-neutral-100 hover:bg-neutral-800"
+                  >
+                    Cancel
+                  </button>
+                </>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setIsEditing(true)}
+                  className="rounded-full border border-neutral-700 bg-neutral-900 px-3 py-1 text-xs font-medium text-neutral-100 hover:bg-neutral-800"
+                >
+                  Edit
+                </button>
+              )}
+            </div>
+          </div>
           <p className="text-[11px] text-neutral-500 -mt-2">
             Edits override AI-generated values. Scores 0–10.
           </p>
@@ -521,96 +591,6 @@ function DealDetailPage() {
             <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-400">
               Deal details
             </h2>
-            <div className="flex items-center gap-2">
-              {isEditing ? (
-                <>
-                  <button
-                    type="button"
-                    onClick={handleSave}
-                    disabled={saving}
-                    className="rounded-full bg-neutral-100 px-3 py-1 text-xs font-medium text-neutral-900 hover:bg-white disabled:opacity-60"
-                  >
-                    {saving ? 'Saving…' : 'Save'}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsEditing(false)
-                      setForm({
-                        company: deal.company || '',
-                        date: formatDateForInput(
-                          deal.date || deal.meeting_date
-                        ),
-                        poc: deal.poc || '',
-                        sector: deal.sector || '',
-                        status: deal.status || 'New',
-                        exciting_reason: deal.exciting_reason || '',
-                        risks: deal.risks || '',
-                        pass_reasons: deal.pass_reasons || '',
-                        watch_reasons: deal.watch_reasons || '',
-                        action_required: deal.action_required || '',
-                        resilience:
-                          scoreData?.softScore?.resilience != null
-                            ? String(Number(scoreData.softScore.resilience))
-                            : '',
-                        ambition:
-                          scoreData?.softScore?.ambition != null
-                            ? String(Number(scoreData.softScore.ambition))
-                            : '',
-                        self_awareness:
-                          scoreData?.softScore?.self_awareness != null
-                            ? String(Number(scoreData.softScore.self_awareness))
-                            : '',
-                        domain_fit:
-                          scoreData?.softScore?.domain_fit != null
-                            ? String(Number(scoreData.softScore.domain_fit))
-                            : '',
-                        storytelling:
-                          scoreData?.softScore?.storytelling != null
-                            ? String(Number(scoreData.softScore.storytelling))
-                            : '',
-                        education_tier:
-                          scoreData?.hardScore?.education_tier != null
-                            ? String(Number(scoreData.hardScore.education_tier))
-                            : '',
-                        domain_work_experience:
-                          scoreData?.hardScore?.domain_work_experience != null
-                            ? String(
-                                Number(scoreData.hardScore.domain_work_experience)
-                              )
-                            : '',
-                        seniority_of_roles:
-                          scoreData?.hardScore?.seniority_of_roles != null
-                            ? String(Number(scoreData.hardScore.seniority_of_roles))
-                            : '',
-                        previous_startup_experience:
-                          scoreData?.hardScore?.previous_startup_experience !=
-                          null
-                            ? String(
-                                Number(
-                                  scoreData.hardScore
-                                    .previous_startup_experience
-                                )
-                              )
-                            : '',
-                        archetype: scoreData?.softScore?.archetype ?? ''
-                      })
-                    }}
-                    className="rounded-full border border-neutral-700 bg-neutral-900 px-3 py-1 text-xs font-medium text-neutral-100 hover:bg-neutral-800"
-                  >
-                    Cancel
-                  </button>
-                </>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => setIsEditing(true)}
-                  className="rounded-full border border-neutral-700 bg-neutral-900 px-3 py-1 text-xs font-medium text-neutral-100 hover:bg-neutral-800"
-                >
-                  Edit
-                </button>
-              )}
-            </div>
           </div>
 
           <div className="grid gap-4 md:grid-cols-3">
@@ -680,7 +660,6 @@ function DealDetailPage() {
               </>
             ) : (
               <>
-                <DisplayField label="Company">{deal.company}</DisplayField>
                 <DisplayField label="Date">
                   {deal.date || deal.meeting_date
                     ? new Date(deal.date || deal.meeting_date).toLocaleDateString()
@@ -688,116 +667,8 @@ function DealDetailPage() {
                 </DisplayField>
                 <DisplayField label="POC">{deal.poc}</DisplayField>
                 <DisplayField label="Sector">{deal.sector}</DisplayField>
-                <DisplayField label="Status">{deal.status || 'New'}</DisplayField>
-                <DisplayField label="Founder score">
-                  {finalScore != null ? finalScore.toFixed(1) : null}
-                </DisplayField>
-                <DisplayField label="DD recommendation">
-                  {ddRecommendation}
-                </DisplayField>
               </>
             )}
-          </div>
-
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-1">
-              <label className="text-xs font-semibold uppercase tracking-wide text-neutral-400">
-                Why is this exciting?
-              </label>
-              {isEditing ? (
-                <textarea
-                  value={form.exciting_reason}
-                  onChange={handleChange('exciting_reason')}
-                  rows={4}
-                  className="w-full rounded-lg border border-neutral-800 bg-neutral-900 px-2 py-1.5 text-sm text-neutral-100 focus:border-neutral-500 focus:outline-none"
-                />
-              ) : (
-                <div className="rounded-lg border border-neutral-800 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 whitespace-pre-wrap">
-                  {deal.exciting_reason || (
-                    <span className="text-neutral-500">No notes yet.</span>
-                  )}
-                </div>
-              )}
-            </div>
-            <div className="space-y-1">
-              <label className="text-xs font-semibold uppercase tracking-wide text-neutral-400">
-                Risks
-              </label>
-              {isEditing ? (
-                <textarea
-                  value={form.risks}
-                  onChange={handleChange('risks')}
-                  rows={4}
-                  className="w-full rounded-lg border border-neutral-800 bg-neutral-900 px-2 py-1.5 text-sm text-neutral-100 focus:border-neutral-500 focus:outline-none"
-                />
-              ) : (
-                <div className="rounded-lg border border-neutral-800 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 whitespace-pre-wrap">
-                  {deal.risks || (
-                    <span className="text-neutral-500">No risks captured yet.</span>
-                  )}
-                </div>
-              )}
-            </div>
-          </div>
-
-          <div className="grid gap-4 md:grid-cols-3">
-            <div className="space-y-1 md:col-span-1">
-              <label className="text-xs font-semibold uppercase tracking-wide text-neutral-400">
-                Reasons for pass
-              </label>
-              {isEditing ? (
-                <textarea
-                  value={form.pass_reasons}
-                  onChange={handleChange('pass_reasons')}
-                  rows={3}
-                  className="w-full rounded-lg border border-neutral-800 bg-neutral-900 px-2 py-1.5 text-sm text-neutral-100 focus:border-neutral-500 focus:outline-none"
-                />
-              ) : (
-                <div className="rounded-lg border border-neutral-800 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 whitespace-pre-wrap">
-                  {deal.pass_reasons || (
-                    <span className="text-neutral-500">None yet.</span>
-                  )}
-                </div>
-              )}
-            </div>
-            <div className="space-y-1 md:col-span-1">
-              <label className="text-xs font-semibold uppercase tracking-wide text-neutral-400">
-                Reasons to watch
-              </label>
-              {isEditing ? (
-                <textarea
-                  value={form.watch_reasons}
-                  onChange={handleChange('watch_reasons')}
-                  rows={3}
-                  className="w-full rounded-lg border border-neutral-800 bg-neutral-900 px-2 py-1.5 text-sm text-neutral-100 focus:border-neutral-500 focus:outline-none"
-                />
-              ) : (
-                <div className="rounded-lg border border-neutral-800 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 whitespace-pre-wrap">
-                  {deal.watch_reasons || (
-                    <span className="text-neutral-500">None yet.</span>
-                  )}
-                </div>
-              )}
-            </div>
-            <div className="space-y-1 md:col-span-1">
-              <label className="text-xs font-semibold uppercase tracking-wide text-neutral-400">
-                Action required
-              </label>
-              {isEditing ? (
-                <textarea
-                  value={form.action_required}
-                  onChange={handleChange('action_required')}
-                  rows={3}
-                  className="w-full rounded-lg border border-neutral-800 bg-neutral-900 px-2 py-1.5 text-sm text-neutral-100 focus:border-neutral-500 focus:outline-none"
-                />
-              ) : (
-                <div className="rounded-lg border border-neutral-800 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 whitespace-pre-wrap">
-                  {deal.action_required || (
-                    <span className="text-neutral-500">No follow-ups captured yet.</span>
-                  )}
-                </div>
-              )}
-            </div>
           </div>
         </div>
       </div>

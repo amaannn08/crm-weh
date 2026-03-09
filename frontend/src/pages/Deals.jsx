@@ -2,8 +2,6 @@ import React, { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { fetchDeals } from '../api/deals'
 
-const STAGE_FILTERS = ['All stages', 'New', 'Active', 'Evaluation', 'Pass', 'Watch', 'Portfolio']
-
 function formatDate(value) {
   if (!value) return ''
   const d = new Date(value)
@@ -15,18 +13,10 @@ function formatDate(value) {
   })
 }
 
-function riskBadge(riskLevel) {
-  if (!riskLevel) return 'bg-neutral-800 text-neutral-200'
-  const level = riskLevel.toLowerCase()
-  if (level.includes('low')) return 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/40'
-  if (level.includes('high')) return 'bg-amber-500/15 text-amber-300 border border-amber-500/40'
-  return 'bg-yellow-500/15 text-yellow-300 border border-yellow-500/40'
-}
-
 function DealsTableRow({ deal, onView }) {
-  const stage = deal.stage || deal.status || 'New'
   const lastMeeting = deal.meeting_date || deal.date || null
   const score = deal.founder_final_score ?? null
+  const description = (deal.business_model || deal.sector || '').trim()
 
   return (
     <tr className="border-b border-neutral-800/80 hover:bg-neutral-900/60 transition-colors">
@@ -38,21 +28,14 @@ function DealsTableRow({ deal, onView }) {
           </div>
         </div>
       </td>
-      <td className="px-4 py-3 align-top">
-        <span className="inline-flex items-center rounded-full bg-neutral-900 px-2.5 py-0.5 text-xs font-medium text-neutral-200 ring-1 ring-neutral-700">
-          {stage}
-        </span>
+      <td className="px-4 py-3 align-top text-sm text-neutral-300 max-w-[24rem]">
+        <div className="line-clamp-2">{description || '—'}</div>
       </td>
       <td className="px-4 py-3 align-top text-sm text-neutral-200">
         {lastMeeting ? formatDate(lastMeeting) : '—'}
       </td>
       <td className="px-4 py-3 align-top text-sm font-medium text-neutral-50">
         {score != null ? Number(score).toFixed(1) : '—'}
-      </td>
-      <td className="px-4 py-3 align-top">
-        <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${riskBadge(deal.risk_level)}`}>
-          {deal.risk_level ? deal.risk_level : '—'}
-        </span>
       </td>
       <td className="px-4 py-3 align-top text-right">
         <div className="flex justify-end gap-2">
@@ -62,13 +45,6 @@ function DealsTableRow({ deal, onView }) {
             className="rounded-full border border-neutral-700 bg-neutral-900 px-3 py-1 text-xs font-medium text-neutral-100 hover:bg-neutral-800"
           >
             View
-          </button>
-          <button
-            type="button"
-            disabled
-            className="rounded-full border border-neutral-800 bg-neutral-900 px-3 py-1 text-xs font-medium text-neutral-400 cursor-not-allowed"
-          >
-            Add meeting
           </button>
         </div>
       </td>
@@ -83,7 +59,6 @@ function DealsPage() {
   const [error, setError] = useState(null)
 
   const [search, setSearch] = useState('')
-  const [stageFilter, setStageFilter] = useState('All stages')
   const [minScore, setMinScore] = useState('0')
   const [industryFilter, setIndustryFilter] = useState('All industries')
 
@@ -136,14 +111,6 @@ function DealsPage() {
 
       if (!nameMatch) return false
 
-      const dealStage = (deal.stage || deal.status || 'New').toLowerCase()
-      if (
-        stageFilter !== 'All stages' &&
-        dealStage !== stageFilter.toLowerCase()
-      ) {
-        return false
-      }
-
       if (industryFilter !== 'All industries') {
         if ((deal.sector || '').trim() !== industryFilter) {
           return false
@@ -157,12 +124,11 @@ function DealsPage() {
 
       return true
     })
-  }, [deals, industryFilter, minScore, search, stageFilter])
+  }, [deals, industryFilter, minScore, search])
 
   const handleViewDeal = (deal) => {
     navigate(`/deals/${deal.id}`)
   }
-
   if (loading) {
     return (
       <div className="flex h-full items-center justify-center text-sm text-neutral-400">
@@ -188,7 +154,7 @@ function DealsPage() {
             Clean, sortable view across all companies in your pipeline. Click a row to open the full deal evaluation.
           </p>
         </div>
-        <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-[minmax(0,2fr)_repeat(3,minmax(0,1fr))]">
+        <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-[minmax(0,2fr)_repeat(2,minmax(0,1fr))]">
           <div className="relative">
             <input
               type="text"
@@ -198,17 +164,6 @@ function DealsPage() {
               className="w-full rounded-xl border border-neutral-800 bg-neutral-900/70 px-3 py-2 text-sm text-neutral-100 placeholder:text-neutral-500 focus:border-neutral-500 focus:outline-none"
             />
           </div>
-          <select
-            value={stageFilter}
-            onChange={(e) => setStageFilter(e.target.value)}
-            className="rounded-xl border border-neutral-800 bg-neutral-900/70 px-3 py-2 text-sm text-neutral-100 focus:border-neutral-500 focus:outline-none"
-          >
-            {STAGE_FILTERS.map((stage) => (
-              <option key={stage} value={stage}>
-                {stage}
-              </option>
-            ))}
-          </select>
           <div className="flex items-center gap-2">
             <span className="whitespace-nowrap text-xs text-neutral-400">
               Min score
@@ -243,12 +198,11 @@ function DealsPage() {
             <thead className="sticky top-0 border-b border-neutral-800/80 bg-neutral-950/80 text-xs font-semibold uppercase tracking-wide text-neutral-500 backdrop-blur">
               <tr>
                 <th className="px-4 py-2 text-left font-semibold">Name</th>
-                <th className="px-4 py-2 text-left font-semibold">Stage</th>
+                <th className="px-4 py-2 text-left font-semibold">Description</th>
                 <th className="px-4 py-2 text-left font-semibold">
                   Last meeting
                 </th>
                 <th className="px-4 py-2 text-left font-semibold">Score</th>
-                <th className="px-4 py-2 text-left font-semibold">Risk</th>
                 <th className="px-4 py-2 text-right font-semibold">Action</th>
               </tr>
             </thead>
@@ -256,7 +210,7 @@ function DealsPage() {
               {filteredDeals.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={6}
+                    colSpan={5}
                     className="px-4 py-8 text-center text-xs text-neutral-500"
                   >
                     No deals match your filters yet.

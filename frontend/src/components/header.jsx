@@ -30,6 +30,14 @@ function Header() {
             Deals
           </NavLink>
           <NavLink
+            to="/meetings"
+            className={({ isActive }) =>
+              `${navLinkBase} ${isActive ? 'text-xl text-white' : 'text-neutral-400'}`
+            }
+          >
+            Meetings
+          </NavLink>
+          <NavLink
             to="/assistant"
             className={({ isActive }) =>
               `${navLinkBase} ${isActive ? 'text-xl text-white' : 'text-neutral-400'}`
