@@ -5,6 +5,7 @@ import AssistantPage from './pages/Assistant'
 import ArenaPage from './pages/Arena'
 import DealsPage from './pages/Deals'
 import DealDetailPage from './pages/DealDetail'
+import MeetingsPage from './pages/Meetings'
 import LoginPage from './pages/Login'
 import { useAuth } from './context/AuthContext'
 
@@ -48,6 +49,10 @@ function App() {
         <Route
           path="/deals/:dealId"
           element={<AssistantLayout><DealDetailPage /></AssistantLayout>}
+        />
+        <Route
+          path="/meetings"
+          element={<AssistantLayout><MeetingsPage /></AssistantLayout>}
         />
         <Route
           path="/assistant/new"
