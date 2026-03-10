@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react'
-import { fetchDeals, updateDeal, fetchDealFiles, deleteDealFile, dealFileUrl } from '../api/deals'
+import { updateDeal, fetchDealFiles, deleteDealFile, dealFileUrl } from '../api/deals'
+import { useDealData } from '../context/DealDataContext'
 
 function formatDate(value) {
   if (!value) return ''
@@ -13,7 +14,7 @@ function formatDate(value) {
 }
 
 function MeetingsPage() {
-  const [deals, setDeals] = useState([])
+  const { deals, loadDeals, updateDealInCache } = useDealData()
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
@@ -32,34 +33,16 @@ function MeetingsPage() {
   const [fileDeletingId, setFileDeletingId] = useState(null)
 
   useEffect(() => {
-    let cancelled = false
-    async function loadDeals() {
-      setLoading(true)
-      setError(null)
-      try {
-        const data = await fetchDeals()
-        if (!cancelled) {
-          setDeals(data)
-          if (data.length > 0) {
-            const firstId = data[0].id
-            setSelectedId((prev) => prev ?? firstId)
-          }
-        }
-      } catch {
-        if (!cancelled) {
-          setError('Failed to load meetings')
-        }
-      } finally {
-        if (!cancelled) {
-          setLoading(false)
-        }
-      }
-    }
+    setLoading(true)
+    setError(null)
     loadDeals()
-    return () => {
-      cancelled = true
-    }
-  }, [])
+      .catch(() => {
+        setError('Failed to load meetings')
+      })
+      .finally(() => {
+        setLoading(false)
+      })
+  }, [loadDeals])
 
   const filteredDeals = useMemo(() => {
     const query = search.trim().toLowerCase()
@@ -137,9 +120,7 @@ function MeetingsPage() {
         watch_reasons: form.watch_reasons || null,
         action_required: form.action_required || null
       })
-      setDeals((prev) =>
-        prev.map((deal) => (deal.id === updated.deal.id ? updated.deal : deal))
-      )
+      updateDealInCache(updated.deal)
     } catch {
       setError('Failed to save meeting notes')
     } finally {

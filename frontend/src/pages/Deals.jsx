@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { fetchDeals } from '../api/deals'
+import { useDealData } from '../context/DealDataContext'
 
 function formatDate(value) {
   if (!value) return ''
@@ -57,8 +57,7 @@ function DealsTableRow({ deal, onView }) {
 
 function DealsPage() {
   const navigate = useNavigate()
-  const [deals, setDeals] = useState([])
-  const [loading, setLoading] = useState(true)
+  const { deals, loadDeals, dealsLoading } = useDealData()
   const [error, setError] = useState(null)
 
   const [search, setSearch] = useState('')
@@ -66,30 +65,10 @@ function DealsPage() {
   const [industryFilter, setIndustryFilter] = useState('All industries')
 
   useEffect(() => {
-    let cancelled = false
-    async function loadDeals() {
-      setLoading(true)
-      setError(null)
-      try {
-        const data = await fetchDeals()
-        if (!cancelled) {
-          setDeals(data)
-        }
-      } catch {
-        if (!cancelled) {
-          setError('Failed to load deals')
-        }
-      } finally {
-        if (!cancelled) {
-          setLoading(false)
-        }
-      }
-    }
-    loadDeals()
-    return () => {
-      cancelled = true
-    }
-  }, [])
+    loadDeals().catch(() => {
+      setError('Failed to load deals')
+    })
+  }, [loadDeals])
 
   const industries = useMemo(() => {
     const sectors = new Set(
@@ -132,7 +111,7 @@ function DealsPage() {
   const handleViewDeal = (deal) => {
     navigate(`/deals/${deal.id}`)
   }
-  if (loading) {
+  if (dealsLoading && !deals.length) {
     return (
       <div className="flex h-full items-center justify-center text-sm text-neutral-400">
         Loading deals…

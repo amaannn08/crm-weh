@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { fetchDeal, updateDeal, uploadDealFiles, deleteDealFile, dealFileUrl } from '../api/deals'
+import { updateDeal, uploadDealFiles, deleteDealFile, dealFileUrl } from '../api/deals'
+import { useDealData } from '../context/DealDataContext'
 
 function formatDateForInput(value) {
   if (!value) return ''
@@ -34,6 +35,7 @@ function DisplayField({ label, children }) {
 function DealDetailPage() {
   const { dealId } = useParams()
   const navigate = useNavigate()
+  const { dealById, loadDealBundle, updateDealBundleInCache, setDealBundleFiles } = useDealData()
 
   const [deal, setDeal] = useState(null)
   const [scoreData, setScoreData] = useState(null)
@@ -56,7 +58,8 @@ function DealDetailPage() {
       setLoading(true)
       setError(null)
       try {
-        const data = await fetchDeal(dealId)
+        const cached = dealById[dealId]
+        const data = cached || (await loadDealBundle(dealId))
         if (cancelled) return
         setDeal(data.deal)
         setScoreData({
@@ -123,7 +126,7 @@ function DealDetailPage() {
     return () => {
       cancelled = true
     }
-  }, [dealId])
+  }, [dealById, dealId, loadDealBundle])
 
   const handleChange = (field) => (e) => {
     setForm((prev) => ({ ...prev, [field]: e.target.value }))
@@ -197,6 +200,12 @@ function DealDetailPage() {
       const updated = await updateDeal(deal.id, patch)
       setDeal(updated.deal)
       setScoreData({
+        softScore: updated.softScore ?? null,
+        hardScore: updated.hardScore ?? null,
+        finalScore: updated.finalScore ?? null
+      })
+      updateDealBundleInCache(deal.id, {
+        deal: updated.deal,
         softScore: updated.softScore ?? null,
         hardScore: updated.hardScore ?? null,
         finalScore: updated.finalScore ?? null
@@ -311,6 +320,7 @@ function DealDetailPage() {
       const res = await uploadDealFiles(deal.id, fileInputRef.current.files)
       if (res?.files) {
         setFiles((prev) => [...res.files, ...prev])
+        setDealBundleFiles(deal.id, [...res.files, ...files])
       }
       if (fileInputRef.current) {
         fileInputRef.current.value = ''
@@ -331,6 +341,10 @@ function DealDetailPage() {
     try {
       await deleteDealFile(deal.id, fileId)
       setFiles((prev) => prev.filter((f) => f.id !== fileId))
+      setDealBundleFiles(
+        deal.id,
+        files.filter((f) => f.id !== fileId)
+      )
     } catch (e) {
       setDeleteError(e.message || 'Failed to delete file')
     } finally {
