@@ -87,8 +87,10 @@ router.post('/chat', async (req, res) => {
       INSERT INTO conversation_messages (conversation_id, role, content)
       VALUES (${conversationIdToUse}::uuid, 'assistant', ${fullAssistantContent})
     `
-    if (conversationTitle === 'New session') {
-      const newTitle = message.slice(0, 80).trim() || 'New session'
+    const normalizedTitle = (conversationTitle || '').trim()
+    if (!normalizedTitle || normalizedTitle === 'New session') {
+      const firstLine = message.split('\n')[0] ?? ''
+      const newTitle = firstLine.slice(0, 80).trim() || 'New session'
       await sql`UPDATE conversations SET title = ${newTitle} WHERE id = ${conversationIdToUse}::uuid`
     }
   } catch (err) {

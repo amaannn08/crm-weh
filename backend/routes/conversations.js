@@ -54,4 +54,22 @@ router.get('/:id', async (req, res) => {
   }
 })
 
+router.delete('/:id', async (req, res) => {
+  try {
+    const id = req.params.id
+    const existing = await sql`
+      SELECT id FROM conversations WHERE id = ${id}::uuid
+    `
+    if (!existing.length) {
+      return res.status(404).json({ error: 'Conversation not found' })
+    }
+    await sql`
+      DELETE FROM conversations WHERE id = ${id}::uuid
+    `
+    return res.status(204).end()
+  } catch (err) {
+    return res.status(500).json({ error: err.message || 'Failed to delete conversation' })
+  }
+})
+
 export default router

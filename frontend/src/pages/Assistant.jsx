@@ -39,6 +39,7 @@ function AssistantPage() {
   const [isTyping, setIsTyping] = useState(false)
   const [loadingConversation, setLoadingConversation] = useState(!isNewSession)
   const messagesEndRef = useRef(null)
+  const [errorMessage, setErrorMessage] = useState('')
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -59,6 +60,7 @@ function AssistantPage() {
         }
       ])
       setLoadingConversation(false)
+      setErrorMessage('')
       return
     }
     let cancelled = false
@@ -95,6 +97,10 @@ function AssistantPage() {
   const handleSendMessage = async (e) => {
     e.preventDefault()
     if (!inputValue.trim()) return
+    if (isNewSession) {
+      setErrorMessage('Click "New session" on the left to start a chat.')
+      return
+    }
 
     const userMessage = {
       id: Date.now(),
@@ -106,6 +112,7 @@ function AssistantPage() {
     setMessages((prev) => [...prev, userMessage])
     setInputValue('')
     setIsTyping(true)
+    setErrorMessage('')
 
     const assistantId = Date.now() + 1
     let assistantAdded = false
@@ -252,6 +259,11 @@ function AssistantPage() {
             </svg>
           </button>
         </form>
+        {errorMessage && (
+          <p className="text-center text-[11px] text-red-400 mt-1">
+            {errorMessage}
+          </p>
+        )}
         <p className="text-center text-[10px] text-neutral-500 mt-2">
           AI can make mistakes. Please verify important information.
         </p>
