@@ -17,7 +17,7 @@ function ProtectedRoute({ children }) {
 
 function PublicLoginOnly({ children }) {
   const { isAuthenticated } = useAuth()
-  if (isAuthenticated) return <Navigate to="/assistant" replace />
+  if (isAuthenticated) return <Navigate to="/deals" replace />
   return children
 }
 
@@ -62,8 +62,8 @@ function App() {
           path="/assistant/:conversationId"
           element={<AssistantLayout><AssistantPage /></AssistantLayout>}
         />
-        <Route path="/" element={<Navigate to="/assistant" replace />} />
-        <Route path="*" element={<Navigate to="/assistant" replace />} />
+        <Route path="/" element={<Navigate to="/deals" replace />} />
+        <Route path="*" element={<Navigate to="/deals" replace />} />
       </Routes>
     </BrowserRouter>
   )

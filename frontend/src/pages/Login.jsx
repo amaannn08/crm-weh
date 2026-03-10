@@ -30,7 +30,7 @@ function LoginPage() {
       }
       if (data.token) {
         login(data.token)
-        navigate('/assistant', { replace: true })
+        navigate('/deals', { replace: true })
       } else {
         setError('Invalid response from server')
       }

@@ -28,6 +28,9 @@ function DealsTableRow({ deal, onView }) {
           </div>
         </div>
       </td>
+      <td className="px-4 py-3 align-top text-sm text-neutral-200">
+        {deal.poc || '—'}
+      </td>
       <td className="px-4 py-3 align-top text-sm text-neutral-300 max-w-[24rem]">
         <div className="line-clamp-2">{description || '—'}</div>
       </td>
@@ -146,7 +149,7 @@ function DealsPage() {
   }
 
   return (
-    <div className="flex h-full flex-col gap-4 py-4">
+    <div className="flex h-full flex-col gap-4 pt-4">
       <header className="space-y-2">
         <div>
           <h1 className="text-lg font-semibold text-neutral-50">Deals</h1>
@@ -198,6 +201,7 @@ function DealsPage() {
             <thead className="sticky top-0 border-b border-neutral-800/80 bg-neutral-950/80 text-xs font-semibold uppercase tracking-wide text-neutral-500 backdrop-blur">
               <tr>
                 <th className="px-4 py-2 text-left font-semibold">Name</th>
+                <th className="px-4 py-2 text-left font-semibold">POC</th>
                 <th className="px-4 py-2 text-left font-semibold">Description</th>
                 <th className="px-4 py-2 text-left font-semibold">
                   Last meeting
@@ -210,7 +214,7 @@ function DealsPage() {
               {filteredDeals.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={5}
+                    colSpan={6}
                     className="px-4 py-8 text-center text-xs text-neutral-500"
                   >
                     No deals match your filters yet.

@@ -235,6 +235,18 @@ function DealDetailPage() {
       : deal.founder_final_score != null
           ? Number(deal.founder_final_score)
           : null
+  const softWeightedScore =
+    scoreData?.softScore?.soft_weighted_score != null
+      ? Number(scoreData.softScore.soft_weighted_score)
+      : deal.founder_soft_score != null
+          ? Number(deal.founder_soft_score)
+          : null
+  const hardWeightedScore =
+    scoreData?.hardScore?.hard_weighted_score != null
+      ? Number(scoreData.hardScore.hard_weighted_score)
+      : deal.founder_hard_score != null
+          ? Number(deal.founder_hard_score)
+          : null
   const ddRecommendation =
     scoreData?.finalScore?.dd_recommendation ?? deal.dd_recommendation ?? null
   const resetFormFromCurrent = () => {
@@ -520,6 +532,14 @@ function DealDetailPage() {
             </div>
           ) : (
             <div className="space-y-2 rounded-lg border border-neutral-800 bg-neutral-900/60 px-3 py-2 text-sm">
+              {softWeightedScore != null && (
+                <div className="text-[13px]">
+                  <span className="text-neutral-400">Soft score</span>
+                  <span className="ml-2 font-medium text-neutral-50">
+                    {softWeightedScore.toFixed(1)}
+                  </span>
+                </div>
+              )}
               <div className="grid grid-cols-2 gap-x-4 gap-y-1 sm:flex sm:flex-wrap sm:gap-4">
                 <div className="flex justify-between gap-2 sm:gap-4">
                   <span className="text-neutral-400">Resilience</span>
@@ -562,13 +582,47 @@ function DealDetailPage() {
                   </span>
                 </div>
               </div>
-              <div className="border-t border-neutral-800 pt-2 mt-2">
-                <span className="text-neutral-400">Hard score</span>
-                <span className="ml-2 font-medium text-neutral-50">
-                  {scoreData?.hardScore?.hard_weighted_score != null
-                    ? Number(scoreData.hardScore.hard_weighted_score).toFixed(1)
-                    : 'Not set'}
-                </span>
+              <div className="border-t border-neutral-800 pt-2 mt-2 space-y-1">
+                <div className="text-[13px]">
+                  <span className="text-neutral-400">Hard score</span>
+                  <span className="ml-2 font-medium text-neutral-50">
+                    {hardWeightedScore != null ? hardWeightedScore.toFixed(1) : 'Not set'}
+                  </span>
+                </div>
+                <div className="flex flex-wrap gap-x-4 gap-y-1 text-[13px]">
+                  <div className="flex gap-1">
+                    <span className="text-neutral-400">Education tier</span>
+                    <span className="font-medium text-neutral-50">
+                      {scoreData?.hardScore?.education_tier != null
+                        ? Number(scoreData.hardScore.education_tier).toFixed(1)
+                        : '–'}
+                    </span>
+                  </div>
+                  <div className="flex gap-1">
+                    <span className="text-neutral-400">Domain work exp.</span>
+                    <span className="font-medium text-neutral-50">
+                      {scoreData?.hardScore?.domain_work_experience != null
+                        ? Number(scoreData.hardScore.domain_work_experience).toFixed(1)
+                        : '–'}
+                    </span>
+                  </div>
+                  <div className="flex gap-1">
+                    <span className="text-neutral-400">Seniority of roles</span>
+                    <span className="font-medium text-neutral-50">
+                      {scoreData?.hardScore?.seniority_of_roles != null
+                        ? Number(scoreData.hardScore.seniority_of_roles).toFixed(1)
+                        : '–'}
+                    </span>
+                  </div>
+                  <div className="flex gap-1">
+                    <span className="text-neutral-400">Prev. startup exp.</span>
+                    <span className="font-medium text-neutral-50">
+                      {scoreData?.hardScore?.previous_startup_experience != null
+                        ? Number(scoreData.hardScore.previous_startup_experience).toFixed(1)
+                        : '–'}
+                    </span>
+                  </div>
+                </div>
               </div>
               <div className="border-t border-neutral-800 pt-2 mt-2">
                 <span className="text-neutral-400">Archetype</span>
