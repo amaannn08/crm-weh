@@ -25,7 +25,8 @@ function MeetingsPage() {
     risks: '',
     pass_reasons: '',
     watch_reasons: '',
-    action_required: ''
+    action_required: '',
+    status: 'New'
   })
   const [saving, setSaving] = useState(false)
   const [files, setFiles] = useState([])
@@ -67,7 +68,8 @@ function MeetingsPage() {
       risks: selectedDeal.risks || '',
       pass_reasons: selectedDeal.pass_reasons || '',
       watch_reasons: selectedDeal.watch_reasons || '',
-      action_required: selectedDeal.action_required || ''
+      action_required: selectedDeal.action_required || '',
+      status: selectedDeal.status || 'New'
     })
   }, [selectedDeal])
 
@@ -118,7 +120,8 @@ function MeetingsPage() {
         risks: form.risks || null,
         pass_reasons: form.pass_reasons || null,
         watch_reasons: form.watch_reasons || null,
-        action_required: form.action_required || null
+        action_required: form.action_required || null,
+        status: form.status || null
       })
       updateDealInCache(updated.deal)
     } catch {
@@ -180,9 +183,9 @@ function MeetingsPage() {
             <table className="min-w-full border-collapse text-sm">
               <thead className="sticky top-0 border-b border-neutral-800/80 bg-neutral-950/80 text-xs font-semibold uppercase tracking-wide text-neutral-500 backdrop-blur">
                 <tr>
-                  <th className="px-4 py-2 text-left font-semibold">Company</th>
-                  <th className="px-4 py-2 text-left font-semibold">Last meeting</th>
-                  <th className="px-4 py-2 text-left font-semibold">Status</th>
+                  <th className="px-2 py-2 text-left font-semibold">Company</th>
+                  <th className="px-2 py-2 text-left font-semibold">Last meeting</th>
+                  <th className="px-2 py-2 text-left font-semibold">Status</th>
                 </tr>
               </thead>
               <tbody>
@@ -260,6 +263,23 @@ function MeetingsPage() {
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-1">
                   <label className="text-xs font-semibold uppercase tracking-wide text-neutral-400">
+                    Status
+                  </label>
+                  <select
+                    value={form.status}
+                    onChange={handleChange('status')}
+                    className="w-full rounded-lg border border-neutral-800 bg-neutral-900 px-2 py-1.5 text-sm text-neutral-100 focus:border-neutral-500 focus:outline-none"
+                  >
+                    <option value="New">New</option>
+                    <option value="Active">Active</option>
+                    <option value="Evaluation">Evaluation</option>
+                    <option value="Pass">Pass</option>
+                    <option value="Watch">Watch</option>
+                    <option value="Portfolio">Portfolio</option>
+                  </select>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold uppercase tracking-wide text-neutral-400">
                     Why is this exciting?
                   </label>
                   <textarea
@@ -269,17 +289,17 @@ function MeetingsPage() {
                     className="w-full rounded-lg border border-neutral-800 bg-neutral-900 px-2 py-1.5 text-sm text-neutral-100 focus:border-neutral-500 focus:outline-none"
                   />
                 </div>
-                <div className="space-y-1">
-                  <label className="text-xs font-semibold uppercase tracking-wide text-neutral-400">
-                    Risks
-                  </label>
-                  <textarea
-                    value={form.risks}
-                    onChange={handleChange('risks')}
-                    rows={4}
-                    className="w-full rounded-lg border border-neutral-800 bg-neutral-900 px-2 py-1.5 text-sm text-neutral-100 focus:border-neutral-500 focus:outline-none"
-                  />
-                </div>
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-semibold uppercase tracking-wide text-neutral-400">
+                  Risks
+                </label>
+                <textarea
+                  value={form.risks}
+                  onChange={handleChange('risks')}
+                  rows={4}
+                  className="w-full rounded-lg border border-neutral-800 bg-neutral-900 px-2 py-1.5 text-sm text-neutral-100 focus:border-neutral-500 focus:outline-none"
+                />
               </div>
 
               <div className="grid gap-4 md:grid-cols-3">
