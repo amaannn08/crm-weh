@@ -1,4 +1,4 @@
-const API_BASE = import.meta.env.VITE_API_URL ?? ''
+export const API_BASE = import.meta.env.VITE_API_URL ?? ''
 
 export const routes = {
   login: API_BASE ? `${API_BASE}/auth/login` : '/api/auth/login',

@@ -1,4 +1,7 @@
 import express from 'express'
+import multer from 'multer'
+import { join, basename } from 'path'
+import { mkdirSync, unlink } from 'fs'
 import { sql, poolRef } from '../db/neon.js'
 import {
   clampScore,
@@ -47,6 +50,20 @@ const HARD_PATCH_FIELDS = [
 
 const router = express.Router()
 
+const uploadDir = join(process.cwd(), 'uploads', 'deal-files')
+mkdirSync(uploadDir, { recursive: true })
+
+const upload = multer({
+  storage: multer.diskStorage({
+    destination: (_req, _file, cb) => cb(null, uploadDir),
+    filename: (_req, file, cb) => {
+      const timestamp = Date.now()
+      const safeName = file.originalname.replace(/[^a-zA-Z0-9._-]/g, '_')
+      cb(null, `${timestamp}-${safeName}`)
+    }
+  })
+})
+
 async function fetchDealBundle(id) {
   const dealRows = await sql`
     SELECT *
@@ -89,12 +106,20 @@ async function fetchDealBundle(id) {
     LIMIT 1
   `
 
+  const fileRows = await sql`
+    SELECT id, file_name, stored_path, mime_type, size, uploaded_at
+    FROM deal_files
+    WHERE deal_id = ${id}
+    ORDER BY uploaded_at DESC
+  `
+
   return {
     deal,
     softScore: softRows[0] ?? null,
     hardScore: hardRows[0] ?? null,
     finalScore: finalRows[0] ?? null,
-    insights: insightsRows[0] ?? null
+    insights: insightsRows[0] ?? null,
+    files: fileRows
   }
 }
 
@@ -533,6 +558,82 @@ router.get('/:id/insights', async (req, res) => {
   } catch (err) {
     console.error('Error fetching deal insights', err)
     res.status(500).json({ error: 'Failed to fetch deal insights' })
+  }
+})
+
+router.post('/:id/files', upload.array('files'), async (req, res) => {
+  const { id } = req.params
+  try {
+    const existing = await sql`
+      SELECT id FROM deals WHERE id = ${id} LIMIT 1
+    `
+    if (!existing[0]) {
+      return res.status(404).json({ error: 'Deal not found' })
+    }
+    const files = req.files || []
+    if (!files.length) {
+      return res.status(400).json({ error: 'No files uploaded' })
+    }
+    const inserted = []
+    // eslint-disable-next-line no-restricted-syntax
+    for (const f of files) {
+      const stored = basename(f.path)
+      const rows = await sql`
+        INSERT INTO deal_files (deal_id, file_name, stored_path, mime_type, size)
+        VALUES (${id}, ${f.originalname}, ${stored}, ${f.mimetype ?? null}, ${f.size ?? null})
+        RETURNING id, file_name, stored_path, mime_type, size, uploaded_at
+      `
+      if (rows[0]) inserted.push(rows[0])
+    }
+    return res.status(201).json({ files: inserted })
+  } catch (err) {
+    console.error('Error uploading deal files', err)
+    return res.status(500).json({ error: 'Failed to upload files' })
+  }
+})
+
+router.get('/:id/files', async (req, res) => {
+  const { id } = req.params
+  try {
+    const files = await sql`
+      SELECT id, file_name, stored_path, mime_type, size, uploaded_at
+      FROM deal_files
+      WHERE deal_id = ${id}
+      ORDER BY uploaded_at DESC
+    `
+    return res.json({ files })
+  } catch (err) {
+    console.error('Error fetching deal files', err)
+    return res.status(500).json({ error: 'Failed to fetch deal files' })
+  }
+})
+
+router.delete('/:dealId/files/:fileId', async (req, res) => {
+  const { dealId, fileId } = req.params
+  try {
+    const rows = await sql`
+      SELECT id, stored_path
+      FROM deal_files
+      WHERE id = ${fileId} AND deal_id = ${dealId}
+      LIMIT 1
+    `
+    const file = rows[0]
+    if (!file) {
+      return res.status(404).json({ error: 'File not found' })
+    }
+    const fullPath = join(uploadDir, file.stored_path)
+    unlink(fullPath, (err) => {
+      if (err && err.code !== 'ENOENT') {
+        console.warn('Failed to remove file from disk', err)
+      }
+    })
+    await sql`
+      DELETE FROM deal_files WHERE id = ${fileId}
+    `
+    return res.status(204).end()
+  } catch (err) {
+    console.error('Error deleting deal file', err)
+    return res.status(500).json({ error: 'Failed to delete file' })
   }
 })
 

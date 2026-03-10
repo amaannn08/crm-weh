@@ -1,5 +1,5 @@
 import { apiHeaders } from './client'
-import { dealScoreUrl, dealUrl, routes } from './routes'
+import { API_BASE, dealScoreUrl, dealUrl, routes } from './routes'
 
 export async function fetchDeals() {
   const res = await fetch(routes.deals, {
@@ -68,5 +68,50 @@ export async function runDealScoring(id, transcript) {
     throw new Error('Failed to run deal scoring')
   }
   return res.json()
+}
+
+export async function uploadDealFiles(id, files) {
+  const formData = new FormData()
+  // eslint-disable-next-line no-restricted-syntax
+  for (const file of files) {
+    formData.append('files', file)
+  }
+  const res = await fetch(`${dealUrl(id)}/files`, {
+    method: 'POST',
+    headers: apiHeaders(null),
+    body: formData
+  })
+  if (!res.ok) {
+    throw new Error('Failed to upload deal files')
+  }
+  return res.json()
+}
+
+export async function fetchDealFiles(id) {
+  const res = await fetch(`${dealUrl(id)}/files`, {
+    headers: apiHeaders()
+  })
+  if (!res.ok) {
+    throw new Error('Failed to fetch deal files')
+  }
+  return res.json()
+}
+
+export async function deleteDealFile(dealId, fileId) {
+  const res = await fetch(`${dealUrl(dealId)}/files/${fileId}`, {
+    method: 'DELETE',
+    headers: apiHeaders()
+  })
+  if (!res.ok) {
+    throw new Error('Failed to delete file')
+  }
+}
+
+export function dealFileUrl(file) {
+  const raw = file?.stored_path || file?.file_name || ''
+  const name = raw.split(/[/\\]/).pop()
+  if (!name) return ''
+  const base = API_BASE ? `${API_BASE}/uploads/deal-files` : '/uploads/deal-files'
+  return `${base}/${encodeURIComponent(name)}`
 }
 

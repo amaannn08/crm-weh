@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useRef } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { fetchDeal, updateDeal } from '../api/deals'
+import { fetchDeal, updateDeal, uploadDealFiles, deleteDealFile, dealFileUrl } from '../api/deals'
 
 function formatDateForInput(value) {
   if (!value) return ''
@@ -39,6 +39,12 @@ function DealDetailPage() {
   const [scoreData, setScoreData] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [files, setFiles] = useState([])
+  const [uploading, setUploading] = useState(false)
+  const [uploadError, setUploadError] = useState('')
+  const fileInputRef = useRef(null)
+  const [deletingId, setDeletingId] = useState(null)
+  const [deleteError, setDeleteError] = useState('')
 
   const [isEditing, setIsEditing] = useState(false)
   const [form, setForm] = useState({})
@@ -58,6 +64,7 @@ function DealDetailPage() {
           hardScore: data.hardScore,
           finalScore: data.finalScore
         })
+        setFiles(data.files || [])
         const softScore = data.softScore ?? null
         const hardScore = data.hardScore ?? null
         setForm({
@@ -294,6 +301,41 @@ function DealDetailPage() {
           : '',
       archetype: scoreData?.softScore?.archetype ?? ''
     })
+  }
+
+  const handleUploadFiles = async () => {
+    if (!deal || !fileInputRef.current || !fileInputRef.current.files.length) return
+    setUploading(true)
+    setUploadError('')
+    try {
+      const res = await uploadDealFiles(deal.id, fileInputRef.current.files)
+      if (res?.files) {
+        setFiles((prev) => [...res.files, ...prev])
+      }
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ''
+      }
+    } catch (e) {
+      setUploadError(e.message || 'Failed to upload files')
+    } finally {
+      setUploading(false)
+    }
+  }
+
+  const handleDeleteFile = async (fileId) => {
+    if (!deal) return
+    const confirmed = window.confirm('Delete this file?')
+    if (!confirmed) return
+    setDeletingId(fileId)
+    setDeleteError('')
+    try {
+      await deleteDealFile(deal.id, fileId)
+      setFiles((prev) => prev.filter((f) => f.id !== fileId))
+    } catch (e) {
+      setDeleteError(e.message || 'Failed to delete file')
+    } finally {
+      setDeletingId(null)
+    }
   }
 
   return (
@@ -722,6 +764,79 @@ function DealDetailPage() {
                 <DisplayField label="POC">{deal.poc}</DisplayField>
                 <DisplayField label="Sector">{deal.sector}</DisplayField>
               </>
+            )}
+          </div>
+        </div>
+        <div className="rounded-2xl border border-neutral-900 bg-[#121212] p-4 space-y-3">
+          <div className="flex items-center justify-between gap-2">
+            <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-400">
+              Meeting files
+            </h2>
+          </div>
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div className="text-[11px] text-neutral-500">
+              Upload relevant transcripts, decks, or notes for this deal.
+            </div>
+            <div className="flex items-center gap-2">
+              <input
+                ref={fileInputRef}
+                type="file"
+                multiple
+                className="text-[11px] text-neutral-300 file:mr-2 file:rounded-md file:border-0 file:bg-neutral-800 file:px-3 file:py-1.5 file:text-xs file:text-neutral-100 hover:file:bg-neutral-700"
+              />
+              <button
+                type="button"
+                onClick={handleUploadFiles}
+                disabled={uploading}
+                className="rounded-full border border-neutral-700 bg-neutral-900 px-3 py-1 text-xs font-medium text-neutral-100 hover:bg-neutral-800 disabled:opacity-60"
+              >
+                {uploading ? 'Uploading…' : 'Upload'}
+              </button>
+            </div>
+          </div>
+          {uploadError && (
+            <div className="text-[11px] text-red-400">
+              {uploadError}
+            </div>
+          )}
+          {deleteError && (
+            <div className="text-[11px] text-red-400">
+              {deleteError}
+            </div>
+          )}
+          <div className="border-t border-neutral-800 pt-2 mt-1">
+            {files.length === 0 ? (
+              <p className="text-[12px] text-neutral-500">No files uploaded yet.</p>
+            ) : (
+              <ul className="space-y-1 text-[13px] text-neutral-100">
+                {files.map((f) => (
+                  <li key={f.id} className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <a
+                        href={dealFileUrl(f)}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="truncate text-neutral-100 hover:text-neutral-300 underline-offset-2 hover:underline"
+                      >
+                        {f.file_name}
+                      </a>
+                      {f.uploaded_at && (
+                        <span className="text-[11px] text-neutral-500 shrink-0">
+                          {new Date(f.uploaded_at).toLocaleDateString()}
+                        </span>
+                      )}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteFile(f.id)}
+                      disabled={deletingId === f.id}
+                      className="rounded-full border border-neutral-700 bg-neutral-900 px-2 py-0.5 text-[11px] font-medium text-neutral-300 hover:bg-neutral-800 disabled:opacity-60"
+                    >
+                      {deletingId === f.id ? 'Deleting…' : 'Delete'}
+                    </button>
+                  </li>
+                ))}
+              </ul>
             )}
           </div>
         </div>

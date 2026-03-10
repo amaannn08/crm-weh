@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react'
-import { fetchDeals, updateDeal } from '../api/deals'
+import { fetchDeals, updateDeal, fetchDealFiles, deleteDealFile, dealFileUrl } from '../api/deals'
 
 function formatDate(value) {
   if (!value) return ''
@@ -27,6 +27,9 @@ function MeetingsPage() {
     action_required: ''
   })
   const [saving, setSaving] = useState(false)
+  const [files, setFiles] = useState([])
+  const [filesLoading, setFilesLoading] = useState(false)
+  const [fileDeletingId, setFileDeletingId] = useState(null)
 
   useEffect(() => {
     let cancelled = false
@@ -85,6 +88,35 @@ function MeetingsPage() {
     })
   }, [selectedDeal])
 
+  useEffect(() => {
+    if (!selectedDeal) {
+      setFiles([])
+      return
+    }
+    let cancelled = false
+    async function loadFiles() {
+      setFilesLoading(true)
+      try {
+        const res = await fetchDealFiles(selectedDeal.id)
+        if (!cancelled) {
+          setFiles(res.files || [])
+        }
+      } catch {
+        if (!cancelled) {
+          setFiles([])
+        }
+      } finally {
+        if (!cancelled) {
+          setFilesLoading(false)
+        }
+      }
+    }
+    loadFiles()
+    return () => {
+      cancelled = true
+    }
+  }, [selectedDeal])
+
   const handleSelectDeal = (dealId) => {
     setSelectedId(dealId)
   }
@@ -112,6 +144,21 @@ function MeetingsPage() {
       setError('Failed to save meeting notes')
     } finally {
       setSaving(false)
+    }
+  }
+
+  const handleDeleteFile = async (fileId) => {
+    if (!selectedDeal) return
+    const confirmed = window.confirm('Delete this file?')
+    if (!confirmed) return
+    setFileDeletingId(fileId)
+    try {
+      await deleteDealFile(selectedDeal.id, fileId)
+      setFiles((prev) => prev.filter((f) => f.id !== fileId))
+    } catch {
+      // keep simple; Meetings stays best-effort for errors
+    } finally {
+      setFileDeletingId(null)
     }
   }
 
@@ -288,6 +335,46 @@ function MeetingsPage() {
                     className="w-full rounded-lg border border-neutral-800 bg-neutral-900 px-2 py-1.5 text-sm text-neutral-100 focus:border-neutral-500 focus:outline-none"
                   />
                 </div>
+              </div>
+              <div className="space-y-2 border-t border-neutral-800 pt-3 mt-1">
+                <h3 className="text-xs font-semibold uppercase tracking-wide text-neutral-400">
+                  Meeting files
+                </h3>
+                {filesLoading ? (
+                  <p className="text-[12px] text-neutral-500">Loading files…</p>
+                ) : files.length === 0 ? (
+                  <p className="text-[12px] text-neutral-500">No files uploaded yet for this deal.</p>
+                ) : (
+                  <ul className="space-y-1 text-[13px] text-neutral-100">
+                    {files.map((f) => (
+                      <li key={f.id} className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <a
+                            href={dealFileUrl(f)}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="truncate text-neutral-100 hover:text-neutral-300 underline-offset-2 hover:underline"
+                          >
+                            {f.file_name}
+                          </a>
+                          {f.uploaded_at && (
+                            <span className="text-[11px] text-neutral-500 shrink-0">
+                              {new Date(f.uploaded_at).toLocaleDateString()}
+                            </span>
+                          )}
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteFile(f.id)}
+                          disabled={fileDeletingId === f.id}
+                          className="rounded-full border border-neutral-700 bg-neutral-900 px-2 py-0.5 text-[11px] font-medium text-neutral-300 hover:bg-neutral-800 disabled:opacity-60"
+                        >
+                          {fileDeletingId === f.id ? 'Deleting…' : 'Delete'}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </div>
             </div>
           )}

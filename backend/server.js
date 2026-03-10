@@ -1,5 +1,6 @@
 import 'dotenv/config'
 import express from 'express'
+import { join } from 'path'
 import authRoutes from './routes/auth.js'
 import assistantRoutes from './routes/assistant.js'
 import conversationRoutes from './routes/conversations.js'
@@ -28,6 +29,11 @@ app.use((req, res, next) => {
   }
   next()
 })
+
+app.use(
+  '/uploads/deal-files',
+  express.static(join(process.cwd(), 'uploads', 'deal-files'))
+)
 
 app.use('/auth', authRoutes)
 app.use('/assistant', authMiddleware, assistantRoutes)

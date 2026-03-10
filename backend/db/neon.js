@@ -204,6 +204,18 @@ export async function initSchema() {
         created_at TIMESTAMPTZ DEFAULT now()
       )
     `)
+
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS deal_files (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        deal_id UUID NOT NULL REFERENCES deals(id) ON DELETE CASCADE,
+        file_name TEXT NOT NULL,
+        stored_path TEXT NOT NULL,
+        mime_type TEXT,
+        size BIGINT,
+        uploaded_at TIMESTAMPTZ DEFAULT now()
+      )
+    `)
   } catch (err) {
     const isTimeout =
       err.message?.includes('fetch failed') ||
