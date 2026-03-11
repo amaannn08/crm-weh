@@ -43,7 +43,7 @@ function Header() {
               `${navLinkBase} ${isActive ? 'text-xl text-white' : 'text-neutral-400'}`
             }
           >
-            Assistant
+            Jarvis AI
           </NavLink>
           <button
             type="button"

@@ -31,7 +31,7 @@ function AssistantPage() {
     {
       id: 1,
       role: 'assistant',
-      content: "Hello! I'm your deal flow assistant. How can I help you today?",
+      content: "Hello! I'm Jarvis AI, your deal flow assistant. How can I help you today?",
       timestamp: new Date()
     }
   ])
@@ -55,7 +55,7 @@ function AssistantPage() {
         {
           id: 1,
           role: 'assistant',
-          content: "Hello! I'm your deal flow assistant. How can I help you today?",
+          content: "Hello! I'm Jarvis AI, your deal flow assistant. How can I help you today?",
           timestamp: new Date()
         }
       ])
@@ -79,7 +79,7 @@ function AssistantPage() {
             {
               id: 1,
               role: 'assistant',
-              content: "Hello! I'm your deal flow assistant. How can I help you today?",
+              content: "Hello! I'm Jarvis AI, your deal flow assistant. How can I help you today?",
               timestamp: new Date()
             }
           ])
