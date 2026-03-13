@@ -44,6 +44,30 @@ export async function initSchema() {
     await client.query('ALTER TABLE meetings ADD COLUMN IF NOT EXISTS drive_file_id TEXT')
     await client.query('ALTER TABLE meetings ADD COLUMN IF NOT EXISTS source_file_name TEXT')
 
+    // CRM meeting metadata per deal (1:1 with deals)
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS deal_meetings (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        deal_id UUID NOT NULL REFERENCES deals(id) ON DELETE CASCADE,
+        company TEXT,
+        meeting_date DATE,
+        poc TEXT,
+        sector TEXT,
+        status TEXT,
+        exciting_reason TEXT,
+        risks TEXT,
+        conviction_score NUMERIC(4,1),
+        pass_reasons TEXT,
+        watch_reasons TEXT,
+        action_required TEXT,
+        created_at TIMESTAMPTZ DEFAULT now(),
+        updated_at TIMESTAMPTZ DEFAULT now()
+      )
+    `)
+    await client.query(
+      'CREATE UNIQUE INDEX IF NOT EXISTS deal_meetings_deal_id_idx ON deal_meetings(deal_id)'
+    )
+
     await client.query(`
       CREATE TABLE IF NOT EXISTS conversations (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

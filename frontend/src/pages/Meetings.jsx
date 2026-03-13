@@ -1,5 +1,12 @@
 import React, { useEffect, useMemo, useState } from 'react'
-import { updateDeal, fetchDealFiles, deleteDealFile, dealFileUrl } from '../api/deals'
+import { useSearchParams } from 'react-router-dom'
+import { fetchDealFiles, deleteDealFile, dealFileUrl } from '../api/deals'
+import {
+  fetchMeetings,
+  fetchDealMeeting,
+  updateDealMeeting,
+  deleteDealMeeting
+} from '../api/meetings'
 import { useDealData } from '../context/DealDataContext'
 
 function formatDate(value) {
@@ -14,11 +21,13 @@ function formatDate(value) {
 }
 
 function MeetingsPage() {
-  const { deals, loadDeals, updateDealInCache } = useDealData()
+  const { deals, loadDeals } = useDealData()
+  const [searchParams] = useSearchParams()
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
   const [search, setSearch] = useState('')
+  const [meetings, setMeetings] = useState([])
   const [selectedId, setSelectedId] = useState(null)
   const [form, setForm] = useState({
     exciting_reason: '',
@@ -34,44 +43,59 @@ function MeetingsPage() {
   const [fileDeletingId, setFileDeletingId] = useState(null)
 
   useEffect(() => {
-    setLoading(true)
-    setError(null)
-    loadDeals()
-      .catch(() => {
+    async function loadAll() {
+      setLoading(true)
+      setError(null)
+      try {
+        await loadDeals()
+        const data = await fetchMeetings()
+        setMeetings(data)
+      } catch (err) {
+        console.error(err)
         setError('Failed to load meetings')
-      })
-      .finally(() => {
+      } finally {
         setLoading(false)
-      })
+      }
+    }
+    loadAll()
   }, [loadDeals])
 
-  const filteredDeals = useMemo(() => {
+  const filteredMeetings = useMemo(() => {
     const query = search.trim().toLowerCase()
-    if (!query) return deals
-    return deals.filter((deal) => {
+    if (!query) return meetings
+    return meetings.filter((m) => {
+      const company = (m.company || '').toLowerCase()
+      const sector = (m.sector || '').toLowerCase()
+      const exciting = (m.exciting_reason || '').toLowerCase()
       return (
-        deal.company.toLowerCase().includes(query) ||
-        (deal.sector || '').toLowerCase().includes(query) ||
-        (deal.exciting_reason || '').toLowerCase().includes(query)
+        company.includes(query) ||
+        sector.includes(query) ||
+        exciting.includes(query)
       )
     })
-  }, [deals, search])
+  }, [meetings, search])
+
+  const selectedMeeting = useMemo(() => {
+    if (!selectedId) return null
+    return meetings.find((m) => m.deal_id === selectedId || m.id === selectedId) ?? null
+  }, [meetings, selectedId])
 
   const selectedDeal = useMemo(() => {
-    return deals.find((deal) => deal.id === selectedId) ?? null
-  }, [deals, selectedId])
+    if (!selectedMeeting) return null
+    return deals.find((deal) => deal.id === selectedMeeting.deal_id) ?? null
+  }, [deals, selectedMeeting])
 
   useEffect(() => {
-    if (!selectedDeal) return
+    if (!selectedMeeting) return
     setForm({
-      exciting_reason: selectedDeal.exciting_reason || '',
-      risks: selectedDeal.risks || '',
-      pass_reasons: selectedDeal.pass_reasons || '',
-      watch_reasons: selectedDeal.watch_reasons || '',
-      action_required: selectedDeal.action_required || '',
-      status: selectedDeal.status || 'New'
+      exciting_reason: selectedMeeting.exciting_reason || '',
+      risks: selectedMeeting.risks || '',
+      pass_reasons: selectedMeeting.pass_reasons || '',
+      watch_reasons: selectedMeeting.watch_reasons || '',
+      action_required: selectedMeeting.action_required || '',
+      status: selectedMeeting.status || 'New'
     })
-  }, [selectedDeal])
+  }, [selectedMeeting])
 
   useEffect(() => {
     if (!selectedDeal) {
@@ -115,7 +139,7 @@ function MeetingsPage() {
     setSaving(true)
     setError(null)
     try {
-      const updated = await updateDeal(selectedDeal.id, {
+      const updated = await updateDealMeeting(selectedDeal.id, {
         exciting_reason: form.exciting_reason || null,
         risks: form.risks || null,
         pass_reasons: form.pass_reasons || null,
@@ -123,7 +147,11 @@ function MeetingsPage() {
         action_required: form.action_required || null,
         status: form.status || null
       })
-      updateDealInCache(updated.deal)
+      setMeetings((prev) =>
+        prev.map((m) =>
+          m.id === updated.id || m.deal_id === selectedDeal.id ? updated : m
+        )
+      )
     } catch {
       setError('Failed to save meeting notes')
     } finally {
@@ -146,9 +174,39 @@ function MeetingsPage() {
     }
   }
 
+  const handleDeleteMeeting = async () => {
+    if (!selectedDeal) return
+    const confirmed = window.confirm(
+      'Delete this meeting? This will not delete the underlying deal.'
+    )
+    if (!confirmed) return
+    setError(null)
+    try {
+      await deleteDealMeeting(selectedDeal.id)
+      setMeetings((prev) =>
+        prev.filter((m) => m.deal_id !== selectedDeal.id)
+      )
+      setSelectedId(null)
+      setFiles([])
+    } catch {
+      setError('Failed to delete meeting')
+    }
+  }
+
+  useEffect(() => {
+    const dealIdParam = searchParams.get('dealId')
+    if (!dealIdParam || !meetings.length) return
+    const m =
+      meetings.find((item) => item.deal_id === dealIdParam) ??
+      meetings.find((item) => item.id === dealIdParam)
+    if (m) {
+      setSelectedId(m.deal_id)
+    }
+  }, [meetings, searchParams])
+
   if (loading) {
     return (
-      <div className="flex h-full items-center justify-center text-sm text-neutral-400">
+      <div className="flex h-full items-center justify-center text-sm text-slate-500">
         Loading meetings…
       </div>
     )
@@ -157,8 +215,8 @@ function MeetingsPage() {
   return (
     <div className="flex h-full min-h-0 flex-col gap-4 py-4 overflow-hidden">
       <header className="space-y-2">
-        <h1 className="text-lg font-semibold text-neutral-50">Meetings</h1>
-        <p className="text-xs text-neutral-400">
+        <h1 className="text-lg font-semibold text-slate-900">Meetings</h1>
+        <p className="text-xs text-slate-500">
           Manage meeting notes by company. Select a company and update notes on
           the right.
         </p>
@@ -167,63 +225,67 @@ function MeetingsPage() {
           placeholder="Search by company, sector, or notes"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="w-full rounded-xl border border-neutral-800 bg-neutral-900/70 px-3 py-2 text-sm text-neutral-100 placeholder:text-neutral-500 focus:border-neutral-500 focus:outline-none"
+          className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-amber-400 focus:outline-none"
         />
       </header>
 
       {error && (
-        <div className="rounded-lg border border-red-900/40 bg-red-950/20 px-3 py-2 text-xs text-red-300">
+        <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
           {error}
         </div>
       )}
 
       <div className="grid min-h-0 flex-1 gap-4 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1.4fr)]">
-        <div className="min-h-0 h-full overflow-hidden rounded-2xl border border-neutral-900 bg-[#121212]">
+        <div className="min-h-0 h-full overflow-hidden rounded-2xl border border-slate-200 bg-white">
           <div className="h-full overflow-y-auto">
             <table className="min-w-full border-collapse text-sm">
-              <thead className="sticky top-0 border-b border-neutral-800/80 bg-neutral-950/80 text-xs font-semibold uppercase tracking-wide text-neutral-500 backdrop-blur">
+              <thead className="sticky top-0 border-b border-slate-200 bg-slate-50/90 text-xs font-semibold uppercase tracking-wide text-slate-500 backdrop-blur">
                 <tr>
                   <th className="px-2 py-2 text-left font-semibold">Company</th>
+                  <th className="px-2 py-2 text-left font-semibold">POC</th>
                   <th className="px-2 py-2 text-left font-semibold">Last meeting</th>
                   <th className="px-2 py-2 text-left font-semibold">Status</th>
                 </tr>
               </thead>
               <tbody>
-                {filteredDeals.length === 0 ? (
+                {filteredMeetings.length === 0 ? (
                   <tr>
                     <td
-                      colSpan={3}
-                      className="px-4 py-8 text-center text-xs text-neutral-500"
+                      colSpan={4}
+                      className="px-4 py-8 text-center text-xs text-slate-500"
                     >
                       No companies match your search.
                     </td>
                   </tr>
                 ) : (
-                  filteredDeals.map((deal) => {
-                    const isActive = deal.id === selectedId
+                  filteredMeetings.map((meeting) => {
+                    const isActive = meeting.deal_id === selectedId
                     return (
                       <tr
-                        key={deal.id}
-                        onClick={() => handleSelectDeal(deal.id)}
-                        className={`cursor-pointer border-b border-neutral-800/80 transition-colors ${
-                          isActive ? 'bg-neutral-900/80' : 'hover:bg-neutral-900/60'
+                        key={meeting.id}
+                        onClick={() => handleSelectDeal(meeting.deal_id)}
+                        className={`cursor-pointer border-b border-slate-200 transition-colors ${
+                          isActive ? 'bg-amber-50' : 'hover:bg-slate-50'
                         }`}
                       >
                         <td className="px-4 py-3 align-top">
-                          <div className="text-sm font-medium text-neutral-50">
-                            {deal.company}
+                          <div className="text-sm font-medium text-slate-900">
+                            {meeting.company}
                           </div>
-                          <div className="text-xs text-neutral-400">
-                            {deal.sector || '—'}
+                          <div className="text-xs text-slate-500">
+                            {meeting.sector || '—'}
                           </div>
                         </td>
-                        <td className="px-4 py-3 align-top text-sm text-neutral-300">
-                          {deal.meeting_date || deal.date
-                            ? formatDate(deal.meeting_date || deal.date)
+                        <td className="px-4 py-3 align-top text-sm text-slate-700">
+                          {meeting.poc || '—'}
+                        </td>
+                        <td className="px-4 py-3 align-top text-sm text-slate-700">
+                          {meeting.meeting_date
+                            ? formatDate(meeting.meeting_date)
                             : '—'}
                         </td>
-                        <td className="px-4 py-3 align-top text-sm text-neutral-300">
-                          {deal.status || 'New'}
+                        <td className="px-4 py-3 align-top text-sm text-slate-700">
+                          {meeting.status || 'New'}
                         </td>
                       </tr>
                     )
@@ -234,30 +296,44 @@ function MeetingsPage() {
           </div>
         </div>
 
-        <div className="min-h-0 rounded-2xl border border-neutral-900 bg-[#121212] p-4">
+        <div className="min-h-0 rounded-2xl border border-slate-200 bg-white p-4">
           {!selectedDeal ? (
-            <div className="flex h-full items-center justify-center text-sm text-neutral-500">
+            <div className="flex h-full items-center justify-center text-sm text-slate-500">
               Select a company to manage meeting notes.
             </div>
           ) : (
             <div className="space-y-4">
               <div className="flex items-center justify-between gap-2">
                 <div>
-                  <h2 className="text-sm font-semibold text-neutral-100">
+                  <h2 className="text-sm font-semibold text-slate-900">
                     {selectedDeal.company}
                   </h2>
-                  <p className="text-xs text-neutral-500">
+                  <p className="text-xs text-slate-500">
                     Meeting notes
                   </p>
+                  {selectedMeeting?.poc && (
+                    <p className="text-[11px] text-slate-500">
+                      POC: {selectedMeeting.poc}
+                    </p>
+                  )}
                 </div>
-                <button
-                  type="button"
-                  onClick={handleSave}
-                  disabled={saving}
-                  className="rounded-full bg-neutral-100 px-3 py-1 text-xs font-medium text-neutral-900 hover:bg-white disabled:opacity-60"
-                >
-                  {saving ? 'Saving…' : 'Save'}
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={handleDeleteMeeting}
+                    className="rounded-full border border-red-200 bg-red-50 px-3 py-1 text-xs font-medium text-red-700 hover:bg-red-100"
+                  >
+                    Delete
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleSave}
+                    disabled={saving}
+                    className="rounded-full bg-amber-500 px-3 py-1 text-xs font-medium text-white hover:bg-amber-400 disabled:opacity-60"
+                  >
+                    {saving ? 'Saving…' : 'Save'}
+                  </button>
+                </div>
               </div>
 
               <div className="grid gap-4 md:grid-cols-2">
@@ -268,7 +344,7 @@ function MeetingsPage() {
                   <select
                     value={form.status}
                     onChange={handleChange('status')}
-                    className="w-full rounded-lg border border-neutral-800 bg-neutral-900 px-2 py-1.5 text-sm text-neutral-100 focus:border-neutral-500 focus:outline-none"
+                    className="w-full rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-sm text-slate-900 focus:border-amber-400 focus:outline-none"
                   >
                     <option value="New">New</option>
                     <option value="Active">Active</option>
@@ -286,7 +362,7 @@ function MeetingsPage() {
                     value={form.exciting_reason}
                     onChange={handleChange('exciting_reason')}
                     rows={4}
-                    className="w-full rounded-lg border border-neutral-800 bg-neutral-900 px-2 py-1.5 text-sm text-neutral-100 focus:border-neutral-500 focus:outline-none"
+                    className="w-full rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-sm text-slate-900 focus:border-amber-400 focus:outline-none"
                   />
                 </div>
               </div>
@@ -298,7 +374,7 @@ function MeetingsPage() {
                   value={form.risks}
                   onChange={handleChange('risks')}
                   rows={4}
-                  className="w-full rounded-lg border border-neutral-800 bg-neutral-900 px-2 py-1.5 text-sm text-neutral-100 focus:border-neutral-500 focus:outline-none"
+                  className="w-full rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-sm text-slate-900 focus:border-amber-400 focus:outline-none"
                 />
               </div>
 
@@ -311,7 +387,7 @@ function MeetingsPage() {
                     value={form.pass_reasons}
                     onChange={handleChange('pass_reasons')}
                     rows={3}
-                    className="w-full rounded-lg border border-neutral-800 bg-neutral-900 px-2 py-1.5 text-sm text-neutral-100 focus:border-neutral-500 focus:outline-none"
+                    className="w-full rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-sm text-slate-900 focus:border-amber-400 focus:outline-none"
                   />
                 </div>
                 <div className="space-y-1">
@@ -322,7 +398,7 @@ function MeetingsPage() {
                     value={form.watch_reasons}
                     onChange={handleChange('watch_reasons')}
                     rows={3}
-                    className="w-full rounded-lg border border-neutral-800 bg-neutral-900 px-2 py-1.5 text-sm text-neutral-100 focus:border-neutral-500 focus:outline-none"
+                    className="w-full rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-sm text-slate-900 focus:border-amber-400 focus:outline-none"
                   />
                 </div>
                 <div className="space-y-1">
@@ -333,20 +409,20 @@ function MeetingsPage() {
                     value={form.action_required}
                     onChange={handleChange('action_required')}
                     rows={3}
-                    className="w-full rounded-lg border border-neutral-800 bg-neutral-900 px-2 py-1.5 text-sm text-neutral-100 focus:border-neutral-500 focus:outline-none"
+                    className="w-full rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-sm text-slate-900 focus:border-amber-400 focus:outline-none"
                   />
                 </div>
               </div>
-              <div className="space-y-2 border-t border-neutral-800 pt-3 mt-1">
+              <div className="space-y-2 border-t border-slate-200 pt-3 mt-1">
                 <h3 className="text-xs font-semibold uppercase tracking-wide text-neutral-400">
                   Meeting files
                 </h3>
                 {filesLoading ? (
-                  <p className="text-[12px] text-neutral-500">Loading files…</p>
+                  <p className="text-[12px] text-slate-500">Loading files…</p>
                 ) : files.length === 0 ? (
-                  <p className="text-[12px] text-neutral-500">No files uploaded yet for this deal.</p>
+                  <p className="text-[12px] text-slate-500">No files uploaded yet for this deal.</p>
                 ) : (
-                  <ul className="space-y-1 text-[13px] text-neutral-100">
+                  <ul className="space-y-1 text-[13px] text-slate-900">
                     {files.map((f) => (
                       <li key={f.id} className="flex items-center justify-between gap-2">
                         <div className="flex items-center gap-2 min-w-0">
@@ -354,12 +430,12 @@ function MeetingsPage() {
                             href={dealFileUrl(f)}
                             target="_blank"
                             rel="noreferrer"
-                            className="truncate text-neutral-100 hover:text-neutral-300 underline-offset-2 hover:underline"
+                            className="truncate text-slate-900 hover:text-slate-700 underline-offset-2 hover:underline"
                           >
                             {f.file_name}
                           </a>
                           {f.uploaded_at && (
-                            <span className="text-[11px] text-neutral-500 shrink-0">
+                            <span className="text-[11px] text-slate-500 shrink-0">
                               {new Date(f.uploaded_at).toLocaleDateString()}
                             </span>
                           )}
@@ -368,7 +444,7 @@ function MeetingsPage() {
                           type="button"
                           onClick={() => handleDeleteFile(f.id)}
                           disabled={fileDeletingId === f.id}
-                          className="rounded-full border border-neutral-700 bg-neutral-900 px-2 py-0.5 text-[11px] font-medium text-neutral-300 hover:bg-neutral-800 disabled:opacity-60"
+                          className="rounded-full border border-slate-200 bg-white px-2 py-0.5 text-[11px] font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-60"
                         >
                           {fileDeletingId === f.id ? 'Deleting…' : 'Delete'}
                         </button>

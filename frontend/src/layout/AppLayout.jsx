@@ -1,30 +1,22 @@
 import React from 'react'
-import { useLocation } from 'react-router-dom'
 import Header from '../components/header'
-import SessionsBar from '../components/SessionsBar'
+import SidebarNav from '../components/SidebarNav'
 
 function AppLayout({ children }) {
-  const location = useLocation()
-  const isAssistant = location.pathname.startsWith('/assistant')
-
   return (
-    <div className="h-screen bg-[#171717] text-neutral-100 flex flex-col">
-  <Header />
+    <div className="flex h-screen min-h-0 flex-col bg-slate-50 text-slate-900">
+      <Header />
 
-  <div className="flex flex-1 overflow-hidden">
-    
-    {isAssistant && (
-      <div className="w-72 border-r border-neutral-800 overflow-y-auto scrollbar-hide">
-        <SessionsBar />
+      <div className="flex min-h-0 flex-1 border-t border-slate-200">
+        <SidebarNav />
+
+        <main className="relative flex min-h-0 flex-1 justify-center overflow-hidden bg-slate-50">
+          <div className="flex min-h-0 w-full max-w-6xl flex-col gap-4 px-6 pb-10 pt-6">
+            {children}
+          </div>
+        </main>
       </div>
-    )}
-
-    <main className="flex-1 overflow-y-auto scrollbar-hide px-6 pb-10 max-w-full mx-auto">
-      {children}
-    </main>
-
-  </div>
-</div>
+    </div>
   )
 }
 

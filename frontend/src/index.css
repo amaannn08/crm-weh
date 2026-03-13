@@ -5,3 +5,11 @@
   --font-sans: "GT America", "GT America Trial", sans-serif;
   --font-mono: "GT America Mono", "GT America Mono Trial", monospace;
 }
+
+.scrollbar-hide {
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}

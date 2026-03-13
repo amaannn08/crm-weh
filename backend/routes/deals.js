@@ -194,6 +194,171 @@ router.get('/', async (_req, res) => {
   }
 })
 
+router.get('/:id/meeting', async (req, res) => {
+  const { id } = req.params
+  try {
+    const rows = await sql`
+      SELECT *
+      FROM deal_meetings
+      WHERE deal_id = ${id}
+      LIMIT 1
+    `
+    const meeting = rows[0] ?? null
+    if (!meeting) {
+      return res.status(404).json({ error: 'Meeting not found for this deal' })
+    }
+    return res.json(meeting)
+  } catch (err) {
+    console.error('Error fetching deal meeting', err)
+    return res.status(500).json({ error: 'Failed to fetch deal meeting' })
+  }
+})
+
+router.post('/:id/meeting', async (req, res) => {
+  const { id } = req.params
+  const {
+    meeting_date,
+    poc,
+    sector,
+    status,
+    exciting_reason,
+    risks,
+    conviction_score,
+    pass_reasons,
+    watch_reasons,
+    action_required
+  } = req.body ?? {}
+
+  try {
+    const existingDealRows = await sql`
+      SELECT id, company
+      FROM deals
+      WHERE id = ${id}
+      LIMIT 1
+    `
+    const deal = existingDealRows[0]
+    if (!deal) {
+      return res.status(404).json({ error: 'Deal not found' })
+    }
+
+    const existingMeetingRows = await sql`
+      SELECT id
+      FROM deal_meetings
+      WHERE deal_id = ${id}
+      LIMIT 1
+    `
+    if (existingMeetingRows[0]) {
+      return res.status(400).json({ error: 'Meeting already exists for this deal' })
+    }
+
+    const rows = await sql`
+      INSERT INTO deal_meetings (
+        deal_id,
+        company,
+        meeting_date,
+        poc,
+        sector,
+        status,
+        exciting_reason,
+        risks,
+        conviction_score,
+        pass_reasons,
+        watch_reasons,
+        action_required
+      )
+      VALUES (
+        ${deal.id},
+        ${deal.company},
+        ${meeting_date ?? null},
+        ${poc ?? null},
+        ${sector ?? null},
+        ${status ?? null},
+        ${exciting_reason ?? null},
+        ${risks ?? null},
+        ${conviction_score ?? null},
+        ${pass_reasons ?? null},
+        ${watch_reasons ?? null},
+        ${action_required ?? null}
+      )
+      RETURNING *
+    `
+    return res.status(201).json(rows[0])
+  } catch (err) {
+    console.error('Error creating deal meeting', err)
+    return res.status(500).json({ error: 'Failed to create deal meeting' })
+  }
+})
+
+router.patch('/:id/meeting', async (req, res) => {
+  const { id } = req.params
+  const patch = req.body ?? {}
+  const entries = Object.entries(patch)
+  if (entries.length === 0) {
+    return res.status(400).json({ error: 'No fields to update' })
+  }
+
+  try {
+    const existingRows = await sql`
+      SELECT *
+      FROM deal_meetings
+      WHERE deal_id = ${id}
+      LIMIT 1
+    `
+    const existing = existingRows[0]
+    if (!existing) {
+      return res.status(404).json({ error: 'Meeting not found for this deal' })
+    }
+
+    const setFragments = []
+    const values = []
+    entries.forEach(([key, value], index) => {
+      setFragments.push(`${key} = $${index + 1}`)
+      values.push(value)
+    })
+
+    const text = `
+      UPDATE deal_meetings
+      SET ${setFragments.join(', ')}, updated_at = now()
+      WHERE deal_id = $${values.length + 1}
+      RETURNING *
+    `
+    const result = await poolRef.query(text, [...values, id])
+    const updated = result.rows[0]
+    if (!updated) {
+      return res.status(404).json({ error: 'Meeting not found for this deal' })
+    }
+    return res.json(updated)
+  } catch (err) {
+    console.error('Error updating deal meeting', err)
+    return res.status(500).json({ error: 'Failed to update deal meeting' })
+  }
+})
+
+router.delete('/:id/meeting', async (req, res) => {
+  const { id } = req.params
+  try {
+    const existingRows = await sql`
+      SELECT id
+      FROM deal_meetings
+      WHERE deal_id = ${id}
+      LIMIT 1
+    `
+    const existing = existingRows[0]
+    if (!existing) {
+      return res.status(404).json({ error: 'Meeting not found for this deal' })
+    }
+
+    await sql`
+      DELETE FROM deal_meetings
+      WHERE deal_id = ${id}
+    `
+    return res.status(204).end()
+  } catch (err) {
+    console.error('Error deleting deal meeting', err)
+    return res.status(500).json({ error: 'Failed to delete deal meeting' })
+  }
+})
+
 router.get('/:id', async (req, res) => {
   const { id } = req.params
   try {
