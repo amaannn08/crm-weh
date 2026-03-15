@@ -94,7 +94,7 @@ function PageShell({
         </section>
       )}
 
-      <section className="min-h-0 flex-1 overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-[0_18px_45px_rgba(15,23,42,0.08)]">
+      <section className="min-h-0 flex-1 flex flex-col overflow-hidden rounded-2xl border border-[#E8E5DE] bg-white">
         {children}
       </section>
     </div>

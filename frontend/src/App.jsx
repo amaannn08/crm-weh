@@ -1,8 +1,7 @@
 import React from 'react'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import AppLayout from './layout/AppLayout'
-import AssistantPage from './pages/Assistant'
-import ArenaPage from './pages/Arena'
+import CallsPage from './pages/Calls'
 import DealsPage from './pages/Deals'
 import DealDetailPage from './pages/DealDetail'
 import MeetingsPage from './pages/Meetings'
@@ -17,11 +16,11 @@ function ProtectedRoute({ children }) {
 
 function PublicLoginOnly({ children }) {
   const { isAuthenticated } = useAuth()
-  if (isAuthenticated) return <Navigate to="/deals" replace />
+  if (isAuthenticated) return <Navigate to="/assistant" replace />
   return children
 }
 
-function AssistantLayout({ children }) {
+function AuthedLayout({ children }) {
   return (
     <ProtectedRoute>
       <AppLayout>{children}</AppLayout>
@@ -33,37 +32,70 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/login" element={<PublicLoginOnly><LoginPage /></PublicLoginOnly>} />
+        <Route
+          path="/login"
+          element={
+            <PublicLoginOnly>
+              <LoginPage />
+            </PublicLoginOnly>
+          }
+        />
+
+        <Route path="/" element={<Navigate to="/assistant" replace />} />
+
+        <Route
+          path="/calls"
+          element={
+            <AuthedLayout>
+              <CallsPage />
+            </AuthedLayout>
+          }
+        />
+
         <Route
           path="/assistant"
-          element={<AssistantLayout><AssistantPage /></AssistantLayout>}
-        />
-        <Route
-          path="/arena"
-          element={<AssistantLayout><ArenaPage /></AssistantLayout>}
-        />
-        <Route
-          path="/deals"
-          element={<AssistantLayout><DealsPage /></AssistantLayout>}
-        />
-        <Route
-          path="/deals/:dealId"
-          element={<AssistantLayout><DealDetailPage /></AssistantLayout>}
-        />
-        <Route
-          path="/meetings"
-          element={<AssistantLayout><MeetingsPage /></AssistantLayout>}
-        />
-        <Route
-          path="/assistant/new"
-          element={<AssistantLayout><AssistantPage /></AssistantLayout>}
+          element={
+            <AuthedLayout>
+              <CallsPage />
+            </AuthedLayout>
+          }
         />
         <Route
           path="/assistant/:conversationId"
-          element={<AssistantLayout><AssistantPage /></AssistantLayout>}
+          element={
+            <AuthedLayout>
+              <CallsPage />
+            </AuthedLayout>
+          }
         />
-        <Route path="/" element={<Navigate to="/deals" replace />} />
-        <Route path="*" element={<Navigate to="/deals" replace />} />
+
+        <Route
+          path="/deals"
+          element={
+            <AuthedLayout>
+              <DealsPage />
+            </AuthedLayout>
+          }
+        />
+        <Route
+          path="/deals/:dealId"
+          element={
+            <AuthedLayout>
+              <DealDetailPage />
+            </AuthedLayout>
+          }
+        />
+
+        <Route
+          path="/meetings"
+          element={
+            <AuthedLayout>
+              <MeetingsPage />
+            </AuthedLayout>
+          }
+        />
+
+        <Route path="*" element={<Navigate to="/assistant" replace />} />
       </Routes>
     </BrowserRouter>
   )

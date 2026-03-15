@@ -20,25 +20,25 @@ function DealsTableRow({ deal, onView, onAddMeeting }) {
   const description = (deal.business_model || deal.sector || '').trim()
 
   return (
-    <tr className="border-b border-slate-200 hover:bg-slate-50 transition-colors">
+    <tr className="border-b border-[#E8E5DE] hover:bg-[#FAFAF8] transition-colors">
       <td className="px-4 py-3 align-top">
         <div className="space-y-1">
-          <div className="text-sm font-medium text-slate-900">{deal.company}</div>
-          <div className="text-xs text-slate-500">
+          <div className="text-sm font-medium text-[#1A1815]">{deal.company}</div>
+          <div className="text-xs text-[#9A958E]">
             {deal.sector || deal.business_model || '—'}
           </div>
         </div>
       </td>
-      <td className="px-4 py-3 align-top text-sm text-slate-700">
+      <td className="px-4 py-3 align-top text-sm text-[#5A5650]">
         {deal.poc || '—'}
       </td>
-      <td className="px-4 py-3 align-top text-sm text-slate-700 max-w-[24rem]">
+      <td className="px-4 py-3 align-top text-sm text-[#5A5650] max-w-[24rem]">
         <div className="line-clamp-2">{description || '—'}</div>
       </td>
-      <td className="px-4 py-3 align-top text-sm text-slate-700">
+      <td className="px-4 py-3 align-top text-sm text-[#5A5650]">
         {lastMeeting ? formatDate(lastMeeting) : '—'}
       </td>
-      <td className="px-4 py-3 align-top text-sm font-medium text-slate-900">
+      <td className="px-4 py-3 align-top text-sm font-medium text-[#1A1815]">
         {score != null ? Number(score).toFixed(1) : '—'}
       </td>
       <td className="px-4 py-3 align-top text-right">
@@ -46,20 +46,60 @@ function DealsTableRow({ deal, onView, onAddMeeting }) {
           <button
             type="button"
             onClick={onAddMeeting}
-            className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-800 hover:bg-slate-50"
+            className="rounded-full border border-[#E8E5DE] bg-white px-3 py-1 text-xs font-medium text-[#5A5650] hover:bg-[#F5F4F0]"
           >
             Add meeting
           </button>
           <button
             type="button"
             onClick={onView}
-            className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-800 hover:bg-slate-50"
+            className="rounded-full border border-[#E8E5DE] bg-white px-3 py-1 text-xs font-medium text-[#5A5650] hover:bg-[#F5F4F0]"
           >
             View
           </button>
         </div>
       </td>
     </tr>
+  )
+}
+
+function DealsTableView({ filteredDeals, onViewDeal, onAddMeetingForDeal }) {
+  return (
+    <div className="min-h-0 flex-1 overflow-auto bg-white">
+      <table className="min-w-full border-collapse text-sm">
+        <thead className="sticky top-0 border-b border-[#E8E5DE] bg-[#FAFAF8]/95 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#9A958E] backdrop-blur">
+          <tr>
+            <th className="px-4 py-3 text-left font-semibold">Name</th>
+            <th className="px-4 py-3 text-left font-semibold">POC</th>
+            <th className="px-4 py-3 text-left font-semibold">Description</th>
+            <th className="px-4 py-3 text-left font-semibold">Last meeting</th>
+            <th className="px-4 py-3 text-left font-semibold">Score</th>
+            <th className="px-4 py-3 text-right font-semibold">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {filteredDeals.length === 0 ? (
+            <tr>
+              <td
+                colSpan={6}
+                className="px-4 py-8 text-center text-xs text-neutral-500"
+              >
+                No deals match your filters yet.
+              </td>
+            </tr>
+          ) : (
+            filteredDeals.map((deal) => (
+              <DealsTableRow
+                key={deal.id}
+                deal={deal}
+                onView={() => onViewDeal(deal)}
+                onAddMeeting={() => onAddMeetingForDeal(deal)}
+              />
+            ))
+          )}
+        </tbody>
+      </table>
+    </div>
   )
 }
 
@@ -236,7 +276,7 @@ function DealsPage() {
       }
     >
       <div className="flex h-full flex-col">
-        <div className="border-b border-slate-200 px-4 pb-3 pt-3 bg-slate-50">
+        <div className="border-b border-[#E8E5DE] px-3 pb-2 pt-2 bg-[#FAFAF8]">
           <div className="grid grid-cols-1 gap-3 md:grid-cols-[minmax(0,2.2fr)_repeat(2,minmax(0,1.1fr))]">
             <div className="relative">
               <input
@@ -244,11 +284,11 @@ function DealsPage() {
                 placeholder="Search by name, tagline, or industry"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-amber-400 focus:outline-none"
+                className="w-full rounded-xl border border-[#E8E5DE] bg-white px-3 py-2 text-sm text-[#1A1815] placeholder:text-[#C8C3BB] focus:border-[#FF7102] focus:outline-none"
               />
             </div>
             <div className="flex items-center gap-2">
-              <span className="whitespace-nowrap text-xs text-slate-500">
+              <span className="whitespace-nowrap text-xs text-[#9A958E]">
                 Min score
               </span>
               <input
@@ -258,13 +298,13 @@ function DealsPage() {
                 step="0.5"
                 value={minScore}
                 onChange={(e) => setMinScore(e.target.value)}
-              className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 focus:border-amber-400 focus:outline-none"
+                className="w-full rounded-xl border border-[#E8E5DE] bg-white px-3 py-2 text-sm text-[#1A1815] focus:border-[#FF7102] focus:outline-none"
               />
             </div>
             <select
               value={industryFilter}
               onChange={(e) => setIndustryFilter(e.target.value)}
-              className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 focus:border-amber-400 focus:outline-none"
+              className="rounded-xl border border-[#E8E5DE] bg-white px-3 py-2 text-sm text-[#1A1815] focus:border-[#FF7102] focus:outline-none"
             >
               {industries.map((industry) => (
                 <option key={industry} value={industry}>
@@ -275,43 +315,11 @@ function DealsPage() {
           </div>
         </div>
 
-        <div className="min-h-0 flex-1 overflow-auto bg-white">
-          <table className="min-w-full border-collapse text-sm">
-            <thead className="sticky top-0 border-b border-slate-200 bg-slate-50/95 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500 backdrop-blur">
-              <tr>
-                <th className="px-4 py-3 text-left font-semibold">Name</th>
-                <th className="px-4 py-3 text-left font-semibold">POC</th>
-                <th className="px-4 py-3 text-left font-semibold">Description</th>
-                <th className="px-4 py-3 text-left font-semibold">
-                  Last meeting
-                </th>
-                <th className="px-4 py-3 text-left font-semibold">Score</th>
-                <th className="px-4 py-3 text-right font-semibold">Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredDeals.length === 0 ? (
-                <tr>
-                  <td
-                    colSpan={6}
-                    className="px-4 py-8 text-center text-xs text-neutral-500"
-                  >
-                    No deals match your filters yet.
-                  </td>
-                </tr>
-              ) : (
-                filteredDeals.map((deal) => (
-                  <DealsTableRow
-                    key={deal.id}
-                    deal={deal}
-                    onView={() => handleViewDeal(deal)}
-                    onAddMeeting={() => handleAddMeeting(deal)}
-                  />
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+        <DealsTableView
+          filteredDeals={filteredDeals}
+          onViewDeal={handleViewDeal}
+          onAddMeetingForDeal={handleAddMeeting}
+        />
       </div>
     </PageShell>
   )

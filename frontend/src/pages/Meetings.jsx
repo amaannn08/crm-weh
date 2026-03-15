@@ -20,6 +20,68 @@ function formatDate(value) {
   })
 }
 
+function MeetingsTable({ filteredMeetings, selectedId, onSelectDeal }) {
+  return (
+    <div className="min-h-0 h-full overflow-hidden rounded-2xl border border-[#E8E5DE] bg-white shadow-[0_1px_2px_rgba(26,24,21,0.04),0_1px_3px_rgba(26,24,21,0.06)]">
+      <div className="h-full overflow-y-auto">
+        <table className="min-w-full border-collapse text-sm">
+          <thead className="sticky top-0 border-b border-[#E8E5DE] bg-[#FAFAF8]/95 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#9A958E] backdrop-blur">
+            <tr>
+              <th className="px-2 py-2 text-left font-semibold">Company</th>
+              <th className="px-2 py-2 text-left font-semibold">POC</th>
+              <th className="px-2 py-2 text-left font-semibold">Last meeting</th>
+              <th className="px-2 py-2 text-left font-semibold">Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filteredMeetings.length === 0 ? (
+              <tr>
+                <td
+                  colSpan={4}
+                  className="px-4 py-8 text-center text-xs text-[#9A958E]"
+                >
+                  No companies match your search.
+                </td>
+              </tr>
+            ) : (
+              filteredMeetings.map((meeting) => {
+                const isActive = meeting.deal_id === selectedId
+                return (
+                  <tr
+                    key={meeting.id}
+                    onClick={() => onSelectDeal(meeting.deal_id)}
+                    className={`cursor-pointer border-b border-[#E8E5DE] transition-colors ${
+                      isActive ? 'bg-[#FFEFE2]' : 'hover:bg-[#FAFAF8]'
+                    }`}
+                  >
+                    <td className="px-4 py-3 align-top">
+                      <div className="text-sm font-medium text-[#1A1815]">
+                        {meeting.company}
+                      </div>
+                      <div className="text-xs text-[#9A958E]">
+                        {meeting.sector || '—'}
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 align-top text-sm text-[#5A5650]">
+                      {meeting.poc || '—'}
+                    </td>
+                    <td className="px-4 py-3 align-top text-sm text-[#5A5650]">
+                      {meeting.meeting_date ? formatDate(meeting.meeting_date) : '—'}
+                    </td>
+                    <td className="px-4 py-3 align-top text-sm text-[#5A5650]">
+                      {meeting.status || 'New'}
+                    </td>
+                  </tr>
+                )
+              })
+            )}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  )
+}
+
 function MeetingsPage() {
   const { deals, loadDeals } = useDealData()
   const [searchParams] = useSearchParams()
@@ -206,7 +268,7 @@ function MeetingsPage() {
 
   if (loading) {
     return (
-      <div className="flex h-full items-center justify-center text-sm text-slate-500">
+      <div className="flex h-full items-center justify-center text-sm text-[#5A5650]">
         Loading meetings…
       </div>
     )
@@ -215,8 +277,8 @@ function MeetingsPage() {
   return (
     <div className="flex h-full min-h-0 flex-col gap-4 py-4 overflow-hidden">
       <header className="space-y-2">
-        <h1 className="text-lg font-semibold text-slate-900">Meetings</h1>
-        <p className="text-xs text-slate-500">
+        <h1 className="text-lg font-semibold text-[#1A1815]">Meetings</h1>
+        <p className="text-xs text-[#9A958E]">
           Manage meeting notes by company. Select a company and update notes on
           the right.
         </p>
@@ -225,94 +287,40 @@ function MeetingsPage() {
           placeholder="Search by company, sector, or notes"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-amber-400 focus:outline-none"
+          className="w-full rounded-xl border border-[#E8E5DE] bg-white px-3 py-2 text-sm text-[#1A1815] placeholder:text-[#C8C3BB] focus:border-[#FF7102] focus:outline-none"
         />
       </header>
 
       {error && (
-        <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+        <div className="rounded-lg border border-[#FEE4E2] bg-[#FEF3F2] px-3 py-2 text-xs text-[#B42318]">
           {error}
         </div>
       )}
 
       <div className="grid min-h-0 flex-1 gap-4 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1.4fr)]">
-        <div className="min-h-0 h-full overflow-hidden rounded-2xl border border-slate-200 bg-white">
-          <div className="h-full overflow-y-auto">
-            <table className="min-w-full border-collapse text-sm">
-              <thead className="sticky top-0 border-b border-slate-200 bg-slate-50/90 text-xs font-semibold uppercase tracking-wide text-slate-500 backdrop-blur">
-                <tr>
-                  <th className="px-2 py-2 text-left font-semibold">Company</th>
-                  <th className="px-2 py-2 text-left font-semibold">POC</th>
-                  <th className="px-2 py-2 text-left font-semibold">Last meeting</th>
-                  <th className="px-2 py-2 text-left font-semibold">Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredMeetings.length === 0 ? (
-                  <tr>
-                    <td
-                      colSpan={4}
-                      className="px-4 py-8 text-center text-xs text-slate-500"
-                    >
-                      No companies match your search.
-                    </td>
-                  </tr>
-                ) : (
-                  filteredMeetings.map((meeting) => {
-                    const isActive = meeting.deal_id === selectedId
-                    return (
-                      <tr
-                        key={meeting.id}
-                        onClick={() => handleSelectDeal(meeting.deal_id)}
-                        className={`cursor-pointer border-b border-slate-200 transition-colors ${
-                          isActive ? 'bg-amber-50' : 'hover:bg-slate-50'
-                        }`}
-                      >
-                        <td className="px-4 py-3 align-top">
-                          <div className="text-sm font-medium text-slate-900">
-                            {meeting.company}
-                          </div>
-                          <div className="text-xs text-slate-500">
-                            {meeting.sector || '—'}
-                          </div>
-                        </td>
-                        <td className="px-4 py-3 align-top text-sm text-slate-700">
-                          {meeting.poc || '—'}
-                        </td>
-                        <td className="px-4 py-3 align-top text-sm text-slate-700">
-                          {meeting.meeting_date
-                            ? formatDate(meeting.meeting_date)
-                            : '—'}
-                        </td>
-                        <td className="px-4 py-3 align-top text-sm text-slate-700">
-                          {meeting.status || 'New'}
-                        </td>
-                      </tr>
-                    )
-                  })
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
+        <MeetingsTable
+          filteredMeetings={filteredMeetings}
+          selectedId={selectedId}
+          onSelectDeal={handleSelectDeal}
+        />
 
-        <div className="min-h-0 rounded-2xl border border-slate-200 bg-white p-4">
+        <div className="min-h-0 rounded-2xl border border-[#E8E5DE] bg-white p-4 shadow-[0_1px_2px_rgba(26,24,21,0.04),0_1px_3px_rgba(26,24,21,0.06)]">
           {!selectedDeal ? (
-            <div className="flex h-full items-center justify-center text-sm text-slate-500">
+            <div className="flex h-full items-center justify-center text-sm text-[#9A958E]">
               Select a company to manage meeting notes.
             </div>
           ) : (
             <div className="space-y-4">
               <div className="flex items-center justify-between gap-2">
                 <div>
-                  <h2 className="text-sm font-semibold text-slate-900">
+                  <h2 className="text-sm font-semibold text-[#1A1815]">
                     {selectedDeal.company}
                   </h2>
-                  <p className="text-xs text-slate-500">
+                  <p className="text-xs text-[#9A958E]">
                     Meeting notes
                   </p>
                   {selectedMeeting?.poc && (
-                    <p className="text-[11px] text-slate-500">
+                    <p className="text-[11px] text-[#9A958E]">
                       POC: {selectedMeeting.poc}
                     </p>
                   )}
@@ -321,7 +329,7 @@ function MeetingsPage() {
                   <button
                     type="button"
                     onClick={handleDeleteMeeting}
-                    className="rounded-full border border-red-200 bg-red-50 px-3 py-1 text-xs font-medium text-red-700 hover:bg-red-100"
+                    className="rounded-full border border-[#FEE4E2] bg-[#FEF3F2] px-3 py-1 text-xs font-medium text-[#B42318] hover:bg-[#FEE4E2]"
                   >
                     Delete
                   </button>
@@ -329,7 +337,7 @@ function MeetingsPage() {
                     type="button"
                     onClick={handleSave}
                     disabled={saving}
-                    className="rounded-full bg-amber-500 px-3 py-1 text-xs font-medium text-white hover:bg-amber-400 disabled:opacity-60"
+                    className="rounded-full bg-[#1A1815] px-3 py-1 text-xs font-medium text-white hover:bg-[#2d2a26] disabled:opacity-60"
                   >
                     {saving ? 'Saving…' : 'Save'}
                   </button>
@@ -338,13 +346,13 @@ function MeetingsPage() {
 
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-1">
-                  <label className="text-xs font-semibold uppercase tracking-wide text-neutral-400">
+                  <label className="text-xs font-semibold uppercase tracking-wide text-[#9A958E]">
                     Status
                   </label>
                   <select
                     value={form.status}
                     onChange={handleChange('status')}
-                    className="w-full rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-sm text-slate-900 focus:border-amber-400 focus:outline-none"
+                    className="w-full rounded-lg border border-[#E8E5DE] bg-white px-2 py-1.5 text-sm text-[#1A1815] focus:border-[#FF7102] focus:outline-none"
                   >
                     <option value="New">New</option>
                     <option value="Active">Active</option>
@@ -355,74 +363,74 @@ function MeetingsPage() {
                   </select>
                 </div>
                 <div className="space-y-1">
-                  <label className="text-xs font-semibold uppercase tracking-wide text-neutral-400">
+                  <label className="text-xs font-semibold uppercase tracking-wide text-[#9A958E]">
                     Why is this exciting?
                   </label>
                   <textarea
                     value={form.exciting_reason}
                     onChange={handleChange('exciting_reason')}
                     rows={4}
-                    className="w-full rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-sm text-slate-900 focus:border-amber-400 focus:outline-none"
+                    className="w-full rounded-lg border border-[#E8E5DE] bg-white px-2 py-1.5 text-sm text-[#1A1815] focus:border-[#FF7102] focus:outline-none"
                   />
                 </div>
               </div>
               <div className="space-y-1">
-                <label className="text-xs font-semibold uppercase tracking-wide text-neutral-400">
+                <label className="text-xs font-semibold uppercase tracking-wide text-[#9A958E]">
                   Risks
                 </label>
                 <textarea
                   value={form.risks}
                   onChange={handleChange('risks')}
                   rows={4}
-                  className="w-full rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-sm text-slate-900 focus:border-amber-400 focus:outline-none"
+                  className="w-full rounded-lg border border-[#E8E5DE] bg-white px-2 py-1.5 text-sm text-[#1A1815] focus:border-[#FF7102] focus:outline-none"
                 />
               </div>
 
               <div className="grid gap-4 md:grid-cols-3">
                 <div className="space-y-1">
-                  <label className="text-xs font-semibold uppercase tracking-wide text-neutral-400">
+                  <label className="text-xs font-semibold uppercase tracking-wide text-[#9A958E]">
                     Reasons for pass
                   </label>
                   <textarea
                     value={form.pass_reasons}
                     onChange={handleChange('pass_reasons')}
                     rows={3}
-                    className="w-full rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-sm text-slate-900 focus:border-amber-400 focus:outline-none"
+                    className="w-full rounded-lg border border-[#E8E5DE] bg-white px-2 py-1.5 text-sm text-[#1A1815] focus:border-[#FF7102] focus:outline-none"
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-xs font-semibold uppercase tracking-wide text-neutral-400">
+                  <label className="text-xs font-semibold uppercase tracking-wide text-[#9A958E]">
                     Reasons to watch
                   </label>
                   <textarea
                     value={form.watch_reasons}
                     onChange={handleChange('watch_reasons')}
                     rows={3}
-                    className="w-full rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-sm text-slate-900 focus:border-amber-400 focus:outline-none"
+                    className="w-full rounded-lg border border-[#E8E5DE] bg-white px-2 py-1.5 text-sm text-[#1A1815] focus:border-[#FF7102] focus:outline-none"
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-xs font-semibold uppercase tracking-wide text-neutral-400">
+                  <label className="text-xs font-semibold uppercase tracking-wide text-[#9A958E]">
                     Action required
                   </label>
                   <textarea
                     value={form.action_required}
                     onChange={handleChange('action_required')}
                     rows={3}
-                    className="w-full rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-sm text-slate-900 focus:border-amber-400 focus:outline-none"
+                    className="w-full rounded-lg border border-[#E8E5DE] bg-white px-2 py-1.5 text-sm text-[#1A1815] focus:border-[#FF7102] focus:outline-none"
                   />
                 </div>
               </div>
-              <div className="space-y-2 border-t border-slate-200 pt-3 mt-1">
-                <h3 className="text-xs font-semibold uppercase tracking-wide text-neutral-400">
+              <div className="space-y-2 border-t border-[#E8E5DE] pt-3 mt-1">
+                <h3 className="text-xs font-semibold uppercase tracking-wide text-[#9A958E]">
                   Meeting files
                 </h3>
                 {filesLoading ? (
-                  <p className="text-[12px] text-slate-500">Loading files…</p>
+                  <p className="text-[12px] text-[#9A958E]">Loading files…</p>
                 ) : files.length === 0 ? (
-                  <p className="text-[12px] text-slate-500">No files uploaded yet for this deal.</p>
+                  <p className="text-[12px] text-[#9A958E]">No files uploaded yet for this deal.</p>
                 ) : (
-                  <ul className="space-y-1 text-[13px] text-slate-900">
+                  <ul className="space-y-1 text-[13px] text-[#1A1815]">
                     {files.map((f) => (
                       <li key={f.id} className="flex items-center justify-between gap-2">
                         <div className="flex items-center gap-2 min-w-0">
@@ -430,12 +438,12 @@ function MeetingsPage() {
                             href={dealFileUrl(f)}
                             target="_blank"
                             rel="noreferrer"
-                            className="truncate text-slate-900 hover:text-slate-700 underline-offset-2 hover:underline"
+                            className="truncate text-[#1A1815] hover:text-[#FF7102] underline-offset-2 hover:underline"
                           >
                             {f.file_name}
                           </a>
                           {f.uploaded_at && (
-                            <span className="text-[11px] text-slate-500 shrink-0">
+                            <span className="text-[11px] text-[#9A958E] shrink-0">
                               {new Date(f.uploaded_at).toLocaleDateString()}
                             </span>
                           )}
@@ -444,7 +452,7 @@ function MeetingsPage() {
                           type="button"
                           onClick={() => handleDeleteFile(f.id)}
                           disabled={fileDeletingId === f.id}
-                          className="rounded-full border border-slate-200 bg-white px-2 py-0.5 text-[11px] font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-60"
+                          className="rounded-full border border-[#E8E5DE] bg-white px-2 py-0.5 text-[11px] font-medium text-[#5A5650] hover:bg-[#F5F4F0] disabled:opacity-60"
                         >
                           {fileDeletingId === f.id ? 'Deleting…' : 'Delete'}
                         </button>

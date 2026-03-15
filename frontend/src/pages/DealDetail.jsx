@@ -22,11 +22,11 @@ function clampScoreValue(value) {
 function DisplayField({ label, children }) {
   return (
     <div className="space-y-1">
-      <div className="text-xs font-semibold uppercase tracking-wide text-neutral-400">
+      <div className="text-xs font-semibold uppercase tracking-wide text-[#9A958E]">
         {label}
       </div>
-      <div className="text-sm text-neutral-100 whitespace-pre-wrap">
-        {children || <span className="text-neutral-500">Not set</span>}
+      <div className="text-sm text-[#1A1815] whitespace-pre-wrap">
+        {children || <span className="text-[#9A958E]">Not set</span>}
       </div>
     </div>
   )
@@ -220,7 +220,7 @@ function DealDetailPage() {
 
   if (loading) {
     return (
-      <div className="flex h-full items-center justify-center text-sm text-neutral-400">
+      <div className="flex h-full items-center justify-center text-sm text-[#5A5650]">
         Loading deal…
       </div>
     )
@@ -228,12 +228,12 @@ function DealDetailPage() {
 
   if (error) {
     return (
-      <div className="flex h-full flex-col items-center justify-center gap-3 text-sm text-red-400">
+      <div className="flex h-full flex-col items-center justify-center gap-3 text-sm text-red-600">
         <p>{error}</p>
         <button
           type="button"
           onClick={() => navigate('/deals')}
-          className="rounded-full border border-neutral-700 bg-neutral-900 px-3 py-1 text-xs font-medium text-neutral-100 hover:bg-neutral-800"
+          className="rounded-full border border-[#E8E5DE] bg-white px-3 py-1 text-xs font-medium text-[#5A5650] hover:bg-[#F5F4F0]"
         >
           Back to deals
         </button>
@@ -353,26 +353,26 @@ function DealDetailPage() {
   }
 
   return (
-    <div className="flex h-full flex-col gap-4 py-4">
+    <div className="flex h-full flex-col gap-4 bg-[#FAFAF8] py-4 px-4 overflow-y-auto">
       <header className="space-y-3">
         <button
           type="button"
           onClick={() => navigate('/deals')}
-          className="text-xs text-neutral-400 hover:text-neutral-200"
+          className="text-xs text-[#5A5650] hover:text-[#1A1815]"
         >
           ← Back to deals
         </button>
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="space-y-1">
-            <h1 className="text-xl font-semibold text-neutral-50">
+            <h1 className="text-xl font-semibold text-[#1A1815]">
               {deal.company}
             </h1>
-            <p className="text-xs text-neutral-400">
+            <p className="text-xs text-[#9A958E]">
               {deal.sector || deal.business_model || 'No sector set yet.'}
             </p>
           </div>
           {finalScore != null && (
-            <div className="rounded-full bg-emerald-500/10 px-4 py-1 text-sm font-medium text-emerald-300 border border-emerald-500/30">
+            <div className="rounded-full border border-emerald-200 bg-emerald-50 px-4 py-1 text-sm font-medium text-emerald-700">
               Score {finalScore.toFixed(1)} / 10
             </div>
           )}
@@ -380,33 +380,33 @@ function DealDetailPage() {
       </header>
 
       <div className="flex flex-col gap-4">
-        <div className="flex flex-col gap-4 rounded-2xl border border-neutral-900 bg-[#121212] p-4 md:flex-row md:items-start md:justify-between">
+        <div className="flex flex-col gap-4 rounded-2xl border border-[#E8E5DE] bg-white p-4 shadow-[0_1px_2px_rgba(26,24,21,0.04),0_1px_3px_rgba(26,24,21,0.06)] md:flex-row md:items-start md:justify-between">
           <div className="space-y-2 md:max-w-xl">
-            <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-400">
+            <h2 className="text-xs font-semibold uppercase tracking-wide text-[#9A958E]">
               Score summary
             </h2>
-            <p className="text-sm text-neutral-100 whitespace-pre-wrap">
+            <p className="text-sm text-[#5A5650] whitespace-pre-wrap">
               Founder quality and recommendation summary.
             </p>
           </div>
           <div className="flex flex-col items-end gap-2">
-            <div className="text-xs font-semibold uppercase tracking-wide text-neutral-400">
+            <div className="text-xs font-semibold uppercase tracking-wide text-[#9A958E]">
               Final score
             </div>
-            <div className="text-3xl font-semibold text-neutral-50">
+            <div className="text-3xl font-semibold text-[#1A1815]">
               {finalScore != null ? finalScore.toFixed(1) : '--'}
             </div>
             {scoreData?.finalScore && (
-              <div className="text-[11px] text-neutral-500">
+              <div className="text-[11px] text-[#9A958E]">
                 DD recommendation: {ddRecommendation || 'Not set'}
               </div>
             )}
           </div>
         </div>
 
-        <div className="rounded-2xl border border-neutral-900 bg-[#121212] p-4 space-y-4">
+        <div className="rounded-2xl border border-[#E8E5DE] bg-white p-4 space-y-4 shadow-[0_1px_2px_rgba(26,24,21,0.04),0_1px_3px_rgba(26,24,21,0.06)]">
           <div className="flex items-center justify-between gap-2">
-            <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-400">
+            <h2 className="text-xs font-semibold uppercase tracking-wide text-[#9A958E]">
               Founder score breakdown
             </h2>
             <div className="flex items-center gap-2">
@@ -416,7 +416,7 @@ function DealDetailPage() {
                     type="button"
                     onClick={handleSave}
                     disabled={saving}
-                    className="rounded-full bg-neutral-100 px-3 py-1 text-xs font-medium text-neutral-900 hover:bg-white disabled:opacity-60"
+                    className="rounded-full bg-[#1A1815] px-3 py-1 text-xs font-medium text-white hover:bg-[#2d2a26] disabled:opacity-60"
                   >
                     {saving ? 'Saving…' : 'Save'}
                   </button>
@@ -426,7 +426,7 @@ function DealDetailPage() {
                       setIsEditing(false)
                       resetFormFromCurrent()
                     }}
-                    className="rounded-full border border-neutral-700 bg-neutral-900 px-3 py-1 text-xs font-medium text-neutral-100 hover:bg-neutral-800"
+                    className="rounded-full border border-[#E8E5DE] bg-white px-3 py-1 text-xs font-medium text-[#5A5650] hover:bg-[#F5F4F0]"
                   >
                     Cancel
                   </button>
@@ -435,20 +435,20 @@ function DealDetailPage() {
                 <button
                   type="button"
                   onClick={() => setIsEditing(true)}
-                  className="rounded-full border border-neutral-700 bg-neutral-900 px-3 py-1 text-xs font-medium text-neutral-100 hover:bg-neutral-800"
+                  className="rounded-full border border-[#E8E5DE] bg-white px-3 py-1 text-xs font-medium text-[#5A5650] hover:bg-[#F5F4F0]"
                 >
                   Edit
                 </button>
               )}
             </div>
           </div>
-          <p className="text-[11px] text-neutral-500 -mt-2">
+          <p className="text-[11px] text-[#9A958E] -mt-2">
             Edits override AI-generated values. Scores 0–10.
           </p>
           {isEditing ? (
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               <div className="space-y-1">
-                <label className="text-xs font-semibold uppercase tracking-wide text-neutral-400">
+                <label className="text-xs font-semibold uppercase tracking-wide text-[#9A958E]">
                   Resilience
                 </label>
                 <input
@@ -458,11 +458,11 @@ function DealDetailPage() {
                   step="0.1"
                   value={form.resilience ?? ''}
                   onChange={handleChange('resilience')}
-                  className="w-full rounded-lg border border-neutral-800 bg-neutral-900 px-2 py-1.5 text-sm text-neutral-100 focus:border-neutral-500 focus:outline-none"
+                  className="w-full rounded-lg border border-[#E8E5DE] bg-white px-2 py-1.5 text-sm text-[#1A1815] focus:border-[#FF7102] focus:outline-none"
                 />
               </div>
               <div className="space-y-1">
-                <label className="text-xs font-semibold uppercase tracking-wide text-neutral-400">
+                <label className="text-xs font-semibold uppercase tracking-wide text-[#9A958E]">
                   Ambition
                 </label>
                 <input
@@ -472,11 +472,11 @@ function DealDetailPage() {
                   step="0.1"
                   value={form.ambition ?? ''}
                   onChange={handleChange('ambition')}
-                  className="w-full rounded-lg border border-neutral-800 bg-neutral-900 px-2 py-1.5 text-sm text-neutral-100 focus:border-neutral-500 focus:outline-none"
+                  className="w-full rounded-lg border border-[#E8E5DE] bg-white px-2 py-1.5 text-sm text-[#1A1815] focus:border-[#FF7102] focus:outline-none"
                 />
               </div>
               <div className="space-y-1">
-                <label className="text-xs font-semibold uppercase tracking-wide text-neutral-400">
+                <label className="text-xs font-semibold uppercase tracking-wide text-[#9A958E]">
                   Self awareness
                 </label>
                 <input
@@ -486,11 +486,11 @@ function DealDetailPage() {
                   step="0.1"
                   value={form.self_awareness ?? ''}
                   onChange={handleChange('self_awareness')}
-                  className="w-full rounded-lg border border-neutral-800 bg-neutral-900 px-2 py-1.5 text-sm text-neutral-100 focus:border-neutral-500 focus:outline-none"
+                  className="w-full rounded-lg border border-[#E8E5DE] bg-white px-2 py-1.5 text-sm text-[#1A1815] focus:border-[#FF7102] focus:outline-none"
                 />
               </div>
               <div className="space-y-1">
-                <label className="text-xs font-semibold uppercase tracking-wide text-neutral-400">
+                <label className="text-xs font-semibold uppercase tracking-wide text-[#9A958E]">
                   Domain fit
                 </label>
                 <input
@@ -500,11 +500,11 @@ function DealDetailPage() {
                   step="0.1"
                   value={form.domain_fit ?? ''}
                   onChange={handleChange('domain_fit')}
-                  className="w-full rounded-lg border border-neutral-800 bg-neutral-900 px-2 py-1.5 text-sm text-neutral-100 focus:border-neutral-500 focus:outline-none"
+                  className="w-full rounded-lg border border-[#E8E5DE] bg-white px-2 py-1.5 text-sm text-[#1A1815] focus:border-[#FF7102] focus:outline-none"
                 />
               </div>
               <div className="space-y-1">
-                <label className="text-xs font-semibold uppercase tracking-wide text-neutral-400">
+                <label className="text-xs font-semibold uppercase tracking-wide text-[#9A958E]">
                   Storytelling
                 </label>
                 <input
@@ -514,11 +514,11 @@ function DealDetailPage() {
                   step="0.1"
                   value={form.storytelling ?? ''}
                   onChange={handleChange('storytelling')}
-                  className="w-full rounded-lg border border-neutral-800 bg-neutral-900 px-2 py-1.5 text-sm text-neutral-100 focus:border-neutral-500 focus:outline-none"
+                  className="w-full rounded-lg border border-[#E8E5DE] bg-white px-2 py-1.5 text-sm text-[#1A1815] focus:border-[#FF7102] focus:outline-none"
                 />
               </div>
               <div className="space-y-1">
-                <label className="text-xs font-semibold uppercase tracking-wide text-neutral-400">
+                <label className="text-xs font-semibold uppercase tracking-wide text-[#9A958E]">
                   Education tier
                 </label>
                 <input
@@ -528,11 +528,11 @@ function DealDetailPage() {
                   step="0.1"
                   value={form.education_tier ?? ''}
                   onChange={handleChange('education_tier')}
-                  className="w-full rounded-lg border border-neutral-800 bg-neutral-900 px-2 py-1.5 text-sm text-neutral-100 focus:border-neutral-500 focus:outline-none"
+                  className="w-full rounded-lg border border-[#E8E5DE] bg-white px-2 py-1.5 text-sm text-[#1A1815] focus:border-[#FF7102] focus:outline-none"
                 />
               </div>
               <div className="space-y-1">
-                <label className="text-xs font-semibold uppercase tracking-wide text-neutral-400">
+                <label className="text-xs font-semibold uppercase tracking-wide text-[#9A958E]">
                   Domain work experience
                 </label>
                 <input
@@ -542,11 +542,11 @@ function DealDetailPage() {
                   step="0.1"
                   value={form.domain_work_experience ?? ''}
                   onChange={handleChange('domain_work_experience')}
-                  className="w-full rounded-lg border border-neutral-800 bg-neutral-900 px-2 py-1.5 text-sm text-neutral-100 focus:border-neutral-500 focus:outline-none"
+                  className="w-full rounded-lg border border-[#E8E5DE] bg-white px-2 py-1.5 text-sm text-[#1A1815] focus:border-[#FF7102] focus:outline-none"
                 />
               </div>
               <div className="space-y-1">
-                <label className="text-xs font-semibold uppercase tracking-wide text-neutral-400">
+                <label className="text-xs font-semibold uppercase tracking-wide text-[#9A958E]">
                   Seniority of roles
                 </label>
                 <input
@@ -556,11 +556,11 @@ function DealDetailPage() {
                   step="0.1"
                   value={form.seniority_of_roles ?? ''}
                   onChange={handleChange('seniority_of_roles')}
-                  className="w-full rounded-lg border border-neutral-800 bg-neutral-900 px-2 py-1.5 text-sm text-neutral-100 focus:border-neutral-500 focus:outline-none"
+                  className="w-full rounded-lg border border-[#E8E5DE] bg-white px-2 py-1.5 text-sm text-[#1A1815] focus:border-[#FF7102] focus:outline-none"
                 />
               </div>
               <div className="space-y-1">
-                <label className="text-xs font-semibold uppercase tracking-wide text-neutral-400">
+                <label className="text-xs font-semibold uppercase tracking-wide text-[#9A958E]">
                   Previous startup experience
                 </label>
                 <input
@@ -570,11 +570,11 @@ function DealDetailPage() {
                   step="0.1"
                   value={form.previous_startup_experience ?? ''}
                   onChange={handleChange('previous_startup_experience')}
-                  className="w-full rounded-lg border border-neutral-800 bg-neutral-900 px-2 py-1.5 text-sm text-neutral-100 focus:border-neutral-500 focus:outline-none"
+                  className="w-full rounded-lg border border-[#E8E5DE] bg-white px-2 py-1.5 text-sm text-[#1A1815] focus:border-[#FF7102] focus:outline-none"
                 />
               </div>
               <div className="space-y-1 sm:col-span-2 lg:col-span-3">
-                <label className="text-xs font-semibold uppercase tracking-wide text-neutral-400">
+                <label className="text-xs font-semibold uppercase tracking-wide text-[#9A958E]">
                   Archetype
                 </label>
                 <input
@@ -582,97 +582,97 @@ function DealDetailPage() {
                   value={form.archetype ?? ''}
                   onChange={handleChange('archetype')}
                   placeholder="e.g. Builder, Visionary"
-                  className="w-full rounded-lg border border-neutral-800 bg-neutral-900 px-2 py-1.5 text-sm text-neutral-100 focus:border-neutral-500 focus:outline-none"
+                  className="w-full rounded-lg border border-[#E8E5DE] bg-white px-2 py-1.5 text-sm text-[#1A1815] placeholder:text-[#C8C3BB] focus:border-[#FF7102] focus:outline-none"
                 />
               </div>
             </div>
           ) : (
-            <div className="space-y-2 rounded-lg border border-neutral-800 bg-neutral-900/60 px-3 py-2 text-sm">
+            <div className="space-y-2 rounded-lg border border-[#E8E5DE] bg-[#FAFAF8] px-3 py-2 text-sm">
               {softWeightedScore != null && (
                 <div className="text-[13px]">
-                  <span className="text-neutral-400">Soft score</span>
-                  <span className="ml-2 font-medium text-neutral-50">
+                  <span className="text-[#9A958E]">Soft score</span>
+                  <span className="ml-2 font-medium text-[#1A1815]">
                     {softWeightedScore.toFixed(1)}
                   </span>
                 </div>
               )}
               <div className="grid grid-cols-2 gap-x-4 gap-y-1 sm:flex sm:flex-wrap sm:gap-4">
                 <div className="flex justify-between gap-2 sm:gap-4">
-                  <span className="text-neutral-400">Resilience</span>
-                  <span className="font-medium text-neutral-50">
+                  <span className="text-[#9A958E]">Resilience</span>
+                  <span className="font-medium text-[#1A1815]">
                     {scoreData?.softScore?.resilience != null
                       ? Number(scoreData.softScore.resilience).toFixed(1)
                       : '–'}
                   </span>
                 </div>
                 <div className="flex justify-between gap-2 sm:gap-4">
-                  <span className="text-neutral-400">Ambition</span>
-                  <span className="font-medium text-neutral-50">
+                  <span className="text-[#9A958E]">Ambition</span>
+                  <span className="font-medium text-[#1A1815]">
                     {scoreData?.softScore?.ambition != null
                       ? Number(scoreData.softScore.ambition).toFixed(1)
                       : '–'}
                   </span>
                 </div>
                 <div className="flex justify-between gap-2 sm:gap-4">
-                  <span className="text-neutral-400">Self awareness</span>
-                  <span className="font-medium text-neutral-50">
+                  <span className="text-[#9A958E]">Self awareness</span>
+                  <span className="font-medium text-[#1A1815]">
                     {scoreData?.softScore?.self_awareness != null
                       ? Number(scoreData.softScore.self_awareness).toFixed(1)
                       : '–'}
                   </span>
                 </div>
                 <div className="flex justify-between gap-2 sm:gap-4">
-                  <span className="text-neutral-400">Domain fit</span>
-                  <span className="font-medium text-neutral-50">
+                  <span className="text-[#9A958E]">Domain fit</span>
+                  <span className="font-medium text-[#1A1815]">
                     {scoreData?.softScore?.domain_fit != null
                       ? Number(scoreData.softScore.domain_fit).toFixed(1)
                       : '–'}
                   </span>
                 </div>
                 <div className="flex justify-between gap-2 sm:gap-4">
-                  <span className="text-neutral-400">Storytelling</span>
-                  <span className="font-medium text-neutral-50">
+                  <span className="text-[#9A958E]">Storytelling</span>
+                  <span className="font-medium text-[#1A1815]">
                     {scoreData?.softScore?.storytelling != null
                       ? Number(scoreData.softScore.storytelling).toFixed(1)
                       : '–'}
                   </span>
                 </div>
               </div>
-              <div className="border-t border-neutral-800 pt-2 mt-2 space-y-1">
+              <div className="border-t border-[#E8E5DE] pt-2 mt-2 space-y-1">
                 <div className="text-[13px]">
-                  <span className="text-neutral-400">Hard score</span>
-                  <span className="ml-2 font-medium text-neutral-50">
+                  <span className="text-[#9A958E]">Hard score</span>
+                  <span className="ml-2 font-medium text-[#1A1815]">
                     {hardWeightedScore != null ? hardWeightedScore.toFixed(1) : 'Not set'}
                   </span>
                 </div>
                 <div className="flex flex-wrap gap-x-4 gap-y-1 text-[13px]">
                   <div className="flex gap-1">
-                    <span className="text-neutral-400">Education tier</span>
-                    <span className="font-medium text-neutral-50">
+                    <span className="text-[#9A958E]">Education tier</span>
+                    <span className="font-medium text-[#1A1815]">
                       {scoreData?.hardScore?.education_tier != null
                         ? Number(scoreData.hardScore.education_tier).toFixed(1)
                         : '–'}
                     </span>
                   </div>
                   <div className="flex gap-1">
-                    <span className="text-neutral-400">Domain work exp.</span>
-                    <span className="font-medium text-neutral-50">
+                    <span className="text-[#9A958E]">Domain work exp.</span>
+                    <span className="font-medium text-[#1A1815]">
                       {scoreData?.hardScore?.domain_work_experience != null
                         ? Number(scoreData.hardScore.domain_work_experience).toFixed(1)
                         : '–'}
                     </span>
                   </div>
                   <div className="flex gap-1">
-                    <span className="text-neutral-400">Seniority of roles</span>
-                    <span className="font-medium text-neutral-50">
+                    <span className="text-[#9A958E]">Seniority of roles</span>
+                    <span className="font-medium text-[#1A1815]">
                       {scoreData?.hardScore?.seniority_of_roles != null
                         ? Number(scoreData.hardScore.seniority_of_roles).toFixed(1)
                         : '–'}
                     </span>
                   </div>
                   <div className="flex gap-1">
-                    <span className="text-neutral-400">Prev. startup exp.</span>
-                    <span className="font-medium text-neutral-50">
+                    <span className="text-[#9A958E]">Prev. startup exp.</span>
+                    <span className="font-medium text-[#1A1815]">
                       {scoreData?.hardScore?.previous_startup_experience != null
                         ? Number(scoreData.hardScore.previous_startup_experience).toFixed(1)
                         : '–'}
@@ -680,15 +680,15 @@ function DealDetailPage() {
                   </div>
                 </div>
               </div>
-              <div className="border-t border-neutral-800 pt-2 mt-2">
-                <span className="text-neutral-400">Archetype</span>
-                <span className="ml-2 font-medium text-neutral-50">
+              <div className="border-t border-[#E8E5DE] pt-2 mt-2">
+                <span className="text-[#9A958E]">Archetype</span>
+                <span className="ml-2 font-medium text-[#1A1815]">
                   {scoreData?.softScore?.archetype || 'Not set'}
                 </span>
               </div>
-              <div className="border-t border-neutral-800 pt-2 mt-2">
-                <span className="text-neutral-400">DD recommendation</span>
-                <span className="ml-2 font-medium text-neutral-50">
+              <div className="border-t border-[#E8E5DE] pt-2 mt-2">
+                <span className="text-[#9A958E]">DD recommendation</span>
+                <span className="ml-2 font-medium text-[#1A1815]">
                   {ddRecommendation || 'Not set'}
                 </span>
               </div>
@@ -696,9 +696,9 @@ function DealDetailPage() {
           )}
         </div>
 
-        <div className="rounded-2xl border border-neutral-900 bg-[#121212] p-4 space-y-4">
+        <div className="rounded-2xl border border-[#E8E5DE] bg-white p-4 space-y-4 shadow-[0_1px_2px_rgba(26,24,21,0.04),0_1px_3px_rgba(26,24,21,0.06)]">
           <div className="flex items-center justify-between gap-2">
-            <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-400">
+            <h2 className="text-xs font-semibold uppercase tracking-wide text-[#9A958E]">
               Deal details
             </h2>
           </div>
@@ -707,57 +707,57 @@ function DealDetailPage() {
             {isEditing ? (
               <>
                 <div className="space-y-1">
-                  <label className="text-xs font-semibold uppercase tracking-wide text-neutral-400">
+                  <label className="text-xs font-semibold uppercase tracking-wide text-[#9A958E]">
                     Company
                   </label>
                   <input
                     type="text"
                     value={form.company}
                     onChange={handleChange('company')}
-                    className="w-full rounded-lg border border-neutral-800 bg-neutral-900 px-2 py-1.5 text-sm text-neutral-100 focus:border-neutral-500 focus:outline-none"
+                    className="w-full rounded-lg border border-[#E8E5DE] bg-white px-2 py-1.5 text-sm text-[#1A1815] focus:border-[#FF7102] focus:outline-none"
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-xs font-semibold uppercase tracking-wide text-neutral-400">
+                  <label className="text-xs font-semibold uppercase tracking-wide text-[#9A958E]">
                     Date
                   </label>
                   <input
                     type="date"
                     value={form.date}
                     onChange={handleChange('date')}
-                    className="w-full rounded-lg border border-neutral-800 bg-neutral-900 px-2 py-1.5 text-sm text-neutral-100 focus:border-neutral-500 focus:outline-none"
+                    className="w-full rounded-lg border border-[#E8E5DE] bg-white px-2 py-1.5 text-sm text-[#1A1815] focus:border-[#FF7102] focus:outline-none"
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-xs font-semibold uppercase tracking-wide text-neutral-400">
+                  <label className="text-xs font-semibold uppercase tracking-wide text-[#9A958E]">
                     POC
                   </label>
                   <input
                     type="text"
                     value={form.poc}
                     onChange={handleChange('poc')}
-                    className="w-full rounded-lg border border-neutral-800 bg-neutral-900 px-2 py-1.5 text-sm text-neutral-100 focus:border-neutral-500 focus:outline-none"
+                    className="w-full rounded-lg border border-[#E8E5DE] bg-white px-2 py-1.5 text-sm text-[#1A1815] focus:border-[#FF7102] focus:outline-none"
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-xs font-semibold uppercase tracking-wide text-neutral-400">
+                  <label className="text-xs font-semibold uppercase tracking-wide text-[#9A958E]">
                     Sector
                   </label>
                   <input
                     type="text"
                     value={form.sector}
                     onChange={handleChange('sector')}
-                    className="w-full rounded-lg border border-neutral-800 bg-neutral-900 px-2 py-1.5 text-sm text-neutral-100 focus:border-neutral-500 focus:outline-none"
+                    className="w-full rounded-lg border border-[#E8E5DE] bg-white px-2 py-1.5 text-sm text-[#1A1815] focus:border-[#FF7102] focus:outline-none"
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-xs font-semibold uppercase tracking-wide text-neutral-400">
+                  <label className="text-xs font-semibold uppercase tracking-wide text-[#9A958E]">
                     Status
                   </label>
                   <select
                     value={form.status}
                     onChange={handleChange('status')}
-                    className="w-full rounded-lg border border-neutral-800 bg-neutral-900 px-2 py-1.5 text-sm text-neutral-100 focus:border-neutral-500 focus:outline-none"
+                    className="w-full rounded-lg border border-[#E8E5DE] bg-white px-2 py-1.5 text-sm text-[#1A1815] focus:border-[#FF7102] focus:outline-none"
                   >
                     <option value="New">New</option>
                     <option value="Active">Active</option>
@@ -781,14 +781,14 @@ function DealDetailPage() {
             )}
           </div>
         </div>
-        <div className="rounded-2xl border border-neutral-900 bg-[#121212] p-4 space-y-3">
+        <div className="rounded-2xl border border-[#E8E5DE] bg-white p-4 space-y-3 shadow-[0_1px_2px_rgba(26,24,21,0.04),0_1px_3px_rgba(26,24,21,0.06)]">
           <div className="flex items-center justify-between gap-2">
-            <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-400">
+            <h2 className="text-xs font-semibold uppercase tracking-wide text-[#9A958E]">
               Meeting files
             </h2>
           </div>
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <div className="text-[11px] text-neutral-500">
+            <div className="text-[11px] text-[#9A958E]">
               Upload relevant transcripts, decks, or notes for this deal.
             </div>
             <div className="flex items-center gap-2">
@@ -796,33 +796,33 @@ function DealDetailPage() {
                 ref={fileInputRef}
                 type="file"
                 multiple
-                className="text-[11px] text-neutral-300 file:mr-2 file:rounded-md file:border-0 file:bg-neutral-800 file:px-3 file:py-1.5 file:text-xs file:text-neutral-100 hover:file:bg-neutral-700"
+                className="text-[11px] text-[#5A5650] file:mr-2 file:rounded-md file:border file:border-[#E8E5DE] file:bg-white file:px-3 file:py-1.5 file:text-xs file:text-[#1A1815] hover:file:bg-[#F5F4F0]"
               />
               <button
                 type="button"
                 onClick={handleUploadFiles}
                 disabled={uploading}
-                className="rounded-full border border-neutral-700 bg-neutral-900 px-3 py-1 text-xs font-medium text-neutral-100 hover:bg-neutral-800 disabled:opacity-60"
+                className="rounded-full border border-[#E8E5DE] bg-white px-3 py-1 text-xs font-medium text-[#5A5650] hover:bg-[#F5F4F0] disabled:opacity-60"
               >
                 {uploading ? 'Uploading…' : 'Upload'}
               </button>
             </div>
           </div>
           {uploadError && (
-            <div className="text-[11px] text-red-400">
+            <div className="text-[11px] text-red-600">
               {uploadError}
             </div>
           )}
           {deleteError && (
-            <div className="text-[11px] text-red-400">
+            <div className="text-[11px] text-red-600">
               {deleteError}
             </div>
           )}
-          <div className="border-t border-neutral-800 pt-2 mt-1">
+          <div className="border-t border-[#E8E5DE] pt-2 mt-1">
             {files.length === 0 ? (
-              <p className="text-[12px] text-neutral-500">No files uploaded yet.</p>
+              <p className="text-[12px] text-[#9A958E]">No files uploaded yet.</p>
             ) : (
-              <ul className="space-y-1 text-[13px] text-neutral-100">
+              <ul className="space-y-1 text-[13px] text-[#1A1815]">
                 {files.map((f) => (
                   <li key={f.id} className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-2 min-w-0">
@@ -830,12 +830,12 @@ function DealDetailPage() {
                         href={dealFileUrl(f)}
                         target="_blank"
                         rel="noreferrer"
-                        className="truncate text-neutral-100 hover:text-neutral-300 underline-offset-2 hover:underline"
+                        className="truncate text-[#1A1815] hover:text-[#FF7102] underline-offset-2 hover:underline"
                       >
                         {f.file_name}
                       </a>
                       {f.uploaded_at && (
-                        <span className="text-[11px] text-neutral-500 shrink-0">
+                        <span className="text-[11px] text-[#9A958E] shrink-0">
                           {new Date(f.uploaded_at).toLocaleDateString()}
                         </span>
                       )}
@@ -844,7 +844,7 @@ function DealDetailPage() {
                       type="button"
                       onClick={() => handleDeleteFile(f.id)}
                       disabled={deletingId === f.id}
-                      className="rounded-full border border-neutral-700 bg-neutral-900 px-2 py-0.5 text-[11px] font-medium text-neutral-300 hover:bg-neutral-800 disabled:opacity-60"
+                      className="rounded-full border border-[#E8E5DE] bg-white px-2 py-0.5 text-[11px] font-medium text-[#5A5650] hover:bg-[#F5F4F0] disabled:opacity-60"
                     >
                       {deletingId === f.id ? 'Deleting…' : 'Delete'}
                     </button>

@@ -2,8 +2,9 @@
 @import "tailwind-scrollbar-hide/v4";
 
 @theme {
-  --font-sans: "GT America", "GT America Trial", sans-serif;
-  --font-mono: "GT America Mono", "GT America Mono Trial", monospace;
+  --font-sans: "Syne", "GT America", "GT America Trial", sans-serif;
+  --font-serif: "Playfair Display", ui-serif, Georgia, serif;
+  --font-mono: "DM Mono", "GT America Mono", "GT America Mono Trial", ui-monospace, monospace;
 }
 
 .scrollbar-hide {
