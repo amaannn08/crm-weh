@@ -1,22 +1,73 @@
-import { GoogleGenAI } from '@google/genai'
-
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY })
-
-const MODEL = 'gemini-3.1-flash-lite-preview'
-
 export async function streamChat(messages, streamCallback) {
-  const systemMessage = messages.find((m) => m.role === 'system')
-  const userContent = messages.filter((m) => m.role === 'user').map((m) => m.content).join('\n\n')
-  const config = systemMessage ? { systemInstruction: systemMessage.content } : {}
+  const apiKey = process.env.DEEPSEEK_API_KEY
+  if (!apiKey) {
+    throw new Error('DEEPSEEK_API_KEY is not set')
+  }
 
-  const stream = await ai.models.generateContentStream({
-    model: MODEL,
-    contents: userContent,
-    config
+  const url = 'https://api.deepseek.com/chat/completions'
+
+  const body = {
+    model: 'deepseek-chat',
+    messages: messages.map((m) => ({
+      role: m.role,
+      content: m.content
+    })),
+    stream: true
+  }
+
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${apiKey}`
+    },
+    body: JSON.stringify(body)
   })
 
-  for await (const chunk of stream) {
-    const text = chunk.text
-    if (text) streamCallback(text)
+  if (!response.ok || !response.body) {
+    const text = await response.text().catch(() => '')
+    throw new Error(
+      `DeepSeek chat request failed with ${response.status} ${response.statusText}: ${text.slice(
+        0,
+        200
+      )}`
+    )
+  }
+
+  const reader = response.body.getReader()
+  const decoder = new TextDecoder('utf-8')
+
+  let done = false
+  let buffer = ''
+
+  while (!done) {
+    const result = await reader.read()
+    done = result.done
+    if (result.value) {
+      buffer += decoder.decode(result.value, { stream: true })
+
+      let newlineIndex
+      while ((newlineIndex = buffer.indexOf('\n')) !== -1) {
+        const line = buffer.slice(0, newlineIndex).trim()
+        buffer = buffer.slice(newlineIndex + 1)
+
+        if (!line.startsWith('data:')) continue
+        const data = line.slice(5).trim()
+        if (!data || data === '[DONE]') {
+          continue
+        }
+
+        try {
+          const json = JSON.parse(data)
+          const delta = json.choices?.[0]?.delta
+          const text = delta?.content || delta?.reasoning_content || ''
+          if (text) {
+            streamCallback(text)
+          }
+        } catch {
+          // ignore malformed JSON chunks
+        }
+      }
+    }
   }
 }

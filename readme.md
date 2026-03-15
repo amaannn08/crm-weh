@@ -14,7 +14,8 @@ cp .env.example .env
 Edit `backend/.env` and set:
 
 - **DATABASE_URL** — Neon Postgres connection string (with pgvector enabled).
-- **GEMINI_API_KEY** — From [Google AI Studio](https://aistudio.google.com/apikey).
+- **GEMINI_API_KEY** — From [Google AI Studio](https://aistudio.google.com/apikey). Used for **embeddings** (`gemini-embedding-001`) and other Gemini-powered utilities.
+- **DEEPSEEK_API_KEY** — From your DeepSeek account. Used for the **assistant chat model** (`deepseek-chat`) via `https://api.deepseek.com/chat/completions`.
 - **TRANSCRIPTS_DIR** — Path to a folder of transcript files: `.txt`, `.md`, or `.docx` (e.g. `./data/transcripts`). Can be relative to `backend/` or absolute.
 
 ### 2. Database
@@ -57,7 +58,7 @@ App runs at **http://localhost:5173** (or the port Vite prints). The frontend pr
 
 ### 5. Use the app
 
-Open the app in the browser and use the Assistant page. Questions are embedded with Gemini, matched to ingested meetings via vector search, and answered by Gemini with streaming.
+Open the app in the browser and use the Assistant page. Questions are embedded with **Gemini embeddings** (`gemini-embedding-001`), matched to ingested meetings via vector search, and answered by the **DeepSeek chat model** (`deepseek-chat`) with streaming.
 
 ---
 
