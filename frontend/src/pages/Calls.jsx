@@ -102,21 +102,38 @@ function CallsPage() {
         if (!res.ok) return
         const data = await res.json()
         if (!Array.isArray(data)) return
-        setSessions(
-          data.map((c) => ({
-            id: c.id,
-            name: c.title || 'New session',
-            messages: [],
-            createdAt: c.created_at
-          }))
-        )
+        setSessions((prev) => {
+          const byId = new Map(prev.map((session) => [session.id, session]))
+
+          data.forEach((c) => {
+            const existing = byId.get(c.id)
+            if (existing) {
+              byId.set(c.id, {
+                ...existing,
+                name: c.title || existing.name || 'New session',
+                createdAt: c.created_at || existing.createdAt
+              })
+            } else {
+              byId.set(c.id, {
+                id: c.id,
+                name: c.title || 'New session',
+                messages: [],
+                createdAt: c.created_at
+              })
+            }
+          })
+
+          return Array.from(byId.values()).sort(
+            (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+          )
+        })
       } catch {
         // ignore fetch errors for now
       }
     }
 
     fetchConversations()
-  }, [activeSessionId])
+  }, [])
 
   useEffect(() => {
     if (messagesEndRef.current) {
