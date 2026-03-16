@@ -110,9 +110,6 @@ function CallsPage() {
             createdAt: c.created_at
           }))
         )
-        if (data.length && !activeSessionId) {
-          setActiveSessionId(data[0].id)
-        }
       } catch {
         // ignore fetch errors for now
       }
