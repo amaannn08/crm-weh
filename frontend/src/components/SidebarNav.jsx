@@ -116,6 +116,7 @@ function SidebarNav() {
   const pathname = location.pathname
   const onDeals = pathname.startsWith('/deals')
   const onMeetings = pathname.startsWith('/meetings')
+  const onPortfolioNews = pathname.startsWith('/portfolio-news')
   const onAssistant = pathname.startsWith('/assistant')
 
   return (
@@ -134,6 +135,7 @@ function SidebarNav() {
         <div className="space-y-1 px-2 pb-4">
           <FolderNavItem to="/deals" label="Deals" badge="142" emoji="📊" active={onDeals} />
           <FolderNavItem to="/meetings" label="Meetings" badge="48" emoji="📅" active={onMeetings} />
+          <FolderNavItem to="/portfolio-news" label="Portfolio News" badge={null} emoji="📰" active={onPortfolioNews} />
           <FolderNavItem to="/assistant" label="Jarvis AI" badge={null} emoji="🤖" active={onAssistant} />
         </div>
 

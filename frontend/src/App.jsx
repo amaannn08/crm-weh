@@ -5,6 +5,7 @@ import CallsPage from './pages/Calls'
 import DealsPage from './pages/Deals'
 import DealDetailPage from './pages/DealDetail'
 import MeetingsPage from './pages/Meetings'
+import PortfolioNewsPage from './pages/PortfolioNews'
 import LoginPage from './pages/Login'
 import { useAuth } from './context/AuthContext'
 
@@ -91,6 +92,15 @@ function App() {
           element={
             <AuthedLayout>
               <MeetingsPage />
+            </AuthedLayout>
+          }
+        />
+
+        <Route
+          path="/portfolio-news"
+          element={
+            <AuthedLayout>
+              <PortfolioNewsPage />
             </AuthedLayout>
           }
         />
