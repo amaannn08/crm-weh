@@ -71,3 +71,46 @@ export async function streamChat(messages, streamCallback) {
     }
   }
 }
+
+/**
+ * Non-streaming call with tool definitions.
+ * Returns the full message object (may include tool_calls array).
+ */
+export async function callWithTools(messages, tools) {
+  const apiKey = process.env.DEEPSEEK_API_KEY
+  if (!apiKey) throw new Error('DEEPSEEK_API_KEY is not set')
+
+  const toolDefs = tools.map((t) => ({
+    type: 'function',
+    function: {
+      name: t.id,
+      description: t.description,
+      parameters: t.inputSchema
+    }
+  }))
+
+  const body = {
+    model: 'deepseek-chat',
+    messages,
+    tools: toolDefs,
+    tool_choice: 'auto',
+    stream: false
+  }
+
+  const response = await fetch('https://api.deepseek.com/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${apiKey}`
+    },
+    body: JSON.stringify(body)
+  })
+
+  if (!response.ok) {
+    const text = await response.text().catch(() => '')
+    throw new Error(`DeepSeek tool-call request failed ${response.status}: ${text.slice(0, 200)}`)
+  }
+
+  const json = await response.json()
+  return json.choices?.[0]?.message ?? null
+}

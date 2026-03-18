@@ -11,7 +11,8 @@ function buildContext(meetings, mode) {
   const body = meetings
     .map((m, i) => {
       const label = m.source_file_name ? `[${m.source_file_name}]` : `[Meeting ${i + 1}]`
-      return `${label}\n${m.transcript}`
+      const companyTag = m.company ? ` (${m.company})` : ''
+      return `${label}${companyTag}\n${m.transcript}`
     })
     .join('\n\n---\n\n')
 
@@ -20,21 +21,23 @@ function buildContext(meetings, mode) {
 
 export const meetingSearchTool = {
   id: 'meeting_search',
-  description: 'Searches ingested meeting transcripts relevant to the user query.',
+  description: 'Searches ingested meeting transcripts relevant to the user query. Optionally filter by company name for company-specific questions.',
   inputSchema: {
     type: 'object',
     properties: {
-      query: { type: 'string' },
+      query: { type: 'string', description: 'The search query' },
+      company: { type: 'string', description: 'Optional company name to filter transcripts' },
       limit: { type: 'number' }
     },
     required: ['query']
   },
   async execute({ session, input }) {
     const query = input?.query ?? ''
+    const company = input?.company ?? null
     const limit = Number.isFinite(input?.limit) && input.limit > 0 ? input.limit : 5
 
     const queryEmbedding = await embed(query)
-    const meetings = await retrieveByVector(queryEmbedding, limit)
+    const meetings = await retrieveByVector(queryEmbedding, limit, company)
 
     let mode = 'direct'
     if (!meetings || meetings.length === 0) {

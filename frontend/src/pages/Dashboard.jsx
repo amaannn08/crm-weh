@@ -92,7 +92,7 @@ function Dashboard() {
     )
 
     return (
-        <div className="flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto py-6 px-6">
+        <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden py-5 px-6">
             {/* Header */}
             <div>
                 <h1 className="text-xl font-semibold text-[#1A1815]">Dashboard</h1>
@@ -100,7 +100,7 @@ function Dashboard() {
             </div>
 
             {/* Stat cards grid */}
-            <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-6">
+            <div className="grid shrink-0 grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-6">
                 <StatCard
                     label="Total deals"
                     value={stats.total}
@@ -151,8 +151,8 @@ function Dashboard() {
                 />
             </div>
 
-            {/* Top deals table */}
-            <div className="rounded-2xl border border-[#E8E5DE] bg-white overflow-hidden">
+            {/* Top deals table — fills remaining height */}
+            <div className="flex min-h-0 flex-1 flex-col rounded-2xl border border-[#E8E5DE] bg-white overflow-hidden">
                 <div className="border-b border-[#E8E5DE] px-5 py-3 flex items-center justify-between">
                     <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#9A958E] font-mono">
                         Top deals by score
@@ -165,7 +165,7 @@ function Dashboard() {
                         View all →
                     </button>
                 </div>
-                <div className="divide-y divide-[#F5F4F0] px-2 py-1">
+                <div className="min-h-0 flex-1 overflow-y-auto divide-y divide-[#F5F4F0] px-2 py-1">
                     {topDeals.length === 0 ? (
                         <p className="px-3 py-6 text-center text-sm text-[#C8C3BB]">No deals yet — upload a transcript to get started.</p>
                     ) : (
@@ -180,26 +180,6 @@ function Dashboard() {
                         ))
                     )}
                 </div>
-            </div>
-
-            {/* Quick actions */}
-            <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-                {[
-                    { label: 'Open deals', to: '/deals', emoji: '📊' },
-                    { label: 'Meetings', to: '/meetings', emoji: '📅' },
-                    { label: 'Jarvis AI', to: '/assistant', emoji: '🤖' },
-                    { label: 'Portfolio News', to: '/portfolio-news', emoji: '📰' },
-                ].map(({ label, to, emoji }) => (
-                    <button
-                        key={to}
-                        type="button"
-                        onClick={() => navigate(to)}
-                        className="flex items-center gap-3 rounded-xl border border-[#E8E5DE] bg-white px-4 py-3 text-left hover:bg-[#F5F4F0] transition-colors"
-                    >
-                        <span className="text-xl">{emoji}</span>
-                        <span className="text-sm font-semibold text-[#5A5650]">{label}</span>
-                    </button>
-                ))}
             </div>
         </div>
     )

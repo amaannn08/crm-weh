@@ -43,6 +43,7 @@ export async function initSchema() {
     `)
     await client.query('ALTER TABLE meetings ADD COLUMN IF NOT EXISTS drive_file_id TEXT')
     await client.query('ALTER TABLE meetings ADD COLUMN IF NOT EXISTS source_file_name TEXT')
+    await client.query('ALTER TABLE meetings ADD COLUMN IF NOT EXISTS company TEXT')
 
     // CRM meeting metadata per deal (1:1 with deals)
     await client.query(`

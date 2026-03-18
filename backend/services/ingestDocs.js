@@ -112,10 +112,11 @@ export async function ingestDocs({ limit, dryRun } = {}) {
       if (!meetingId) {
         const embedding = await embed(transcript)
         const vectorStr = formatVector(embedding)
+        const companyForMeeting = companyMissing ? null : (extraction.company || null)
 
         const meetingRows = await sql`
-          INSERT INTO meetings (drive_file_id, source_file_name, transcript, embedding)
-          VALUES (${file.name}, ${file.name}, ${transcript}, ${vectorStr}::vector)
+          INSERT INTO meetings (drive_file_id, source_file_name, transcript, embedding, company)
+          VALUES (${file.name}, ${file.name}, ${transcript}, ${vectorStr}::vector, ${companyForMeeting})
           RETURNING id
         `
         meetingId = meetingRows[0].id

@@ -115,7 +115,7 @@ function SidebarNav() {
   const onPortfolioNews = pathname.startsWith('/portfolio-news')
   const onAssistant = pathname.startsWith('/assistant')
 
-  const { deals, loadDeals } = useDealData()
+  const { deals, loadDeals, meetings } = useDealData()
 
   // Ensure deals are loaded regardless of which page the user lands on
   useEffect(() => { loadDeals() }, [loadDeals])
@@ -140,7 +140,7 @@ function SidebarNav() {
           <FolderNavItem to="/dashboard" label="Dashboard" badge={null} emoji="🏠" active={pathname === '/dashboard'} />
           <FolderNavItem to="/assistant" label="Jarvis AI" badge={null} emoji="🤖" active={onAssistant} />
           <FolderNavItem to="/deals" label="Deals" badge={deals.length || null} emoji="📊" active={onDeals} />
-          <FolderNavItem to="/meetings" label="Meetings" badge={deals.length || null} emoji="📅" active={onMeetings} />
+          <FolderNavItem to="/meetings" label="Meetings" badge={meetings.length || null} emoji="📅" active={onMeetings} />
           <FolderNavItem to="/portfolio-news" label="Portfolio News" badge={null} emoji="📰" active={onPortfolioNews} />
         </div>
 

@@ -29,13 +29,7 @@ function Header() {
               <span className="rounded-full bg-[#FFD0AB] px-1.5 py-[1px] text-[10px] font-medium text-[#1A1815]">
                 {deals.length || '—'}
               </span>
-              <span>Calls indexed</span>
-            </div>
-            <div className="inline-flex items-center gap-2 rounded-full border border-[#E8E5DE] bg-white px-3 py-1 text-[10px] font-medium uppercase tracking-[0.16em] text-[#5A5650]">
-              <span className="rounded-full bg-[#1A1815] px-1.5 py-[1px] text-[10px] font-medium text-white">
-                187h
-              </span>
-              <span>Of transcripts</span>
+              <span>Deals indexed</span>
             </div>
           </div>
 
