@@ -19,9 +19,8 @@ function AppLayout({ children }) {
 
         <main className="relative flex min-h-0 flex-1 justify-center overflow-hidden bg-[#FAFAF8]">
           <div
-            className={`flex min-h-0 w-full max-w-6xl flex-col gap-4 pb-2 ${
-              isCallsRoute ? 'pt-0' : 'pt-2'
-            }`}
+            className={`flex min-h-0 w-full flex-col gap-4 pb-2 ${isCallsRoute ? 'pt-0 px-0' : 'pt-4 px-6'
+              }`}
           >
             {children}
           </div>

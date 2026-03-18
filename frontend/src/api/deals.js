@@ -45,6 +45,16 @@ export async function updateDeal(id, patch) {
   return res.json()
 }
 
+export async function deleteDeal(id) {
+  const res = await fetch(dealUrl(id), {
+    method: 'DELETE',
+    headers: apiHeaders()
+  })
+  if (!res.ok && res.status !== 404) {
+    throw new Error('Failed to delete deal')
+  }
+}
+
 export async function fetchDealScore(id) {
   const res = await fetch(dealScoreUrl(id), {
     headers: apiHeaders()

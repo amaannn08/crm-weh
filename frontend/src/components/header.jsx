@@ -1,10 +1,12 @@
 import React from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { useDealData } from '../context/DealDataContext'
 
 function Header() {
   const { logout } = useAuth()
   const navigate = useNavigate()
+  const { deals } = useDealData()
 
   const handleLogout = () => {
     logout()
@@ -21,7 +23,7 @@ function Header() {
             className="w-20"
           />
           <span className="text-[11px] font-medium uppercase tracking-[0.26em] text-[#FF7102] font-mono">
-            Call Intelligence
+            Jarvis AI
           </span>
         </div>
 
@@ -29,7 +31,7 @@ function Header() {
           <div className="hidden items-center gap-2 md:flex font-mono">
             <div className="inline-flex items-center gap-2 rounded-full border border-[#E8E5DE] bg-white px-3 py-1 text-[10px] font-medium uppercase tracking-[0.16em] text-[#5A5650]">
               <span className="rounded-full bg-[#FFD0AB] px-1.5 py-[1px] text-[10px] font-medium text-[#1A1815]">
-                142
+                {deals.length || '—'}
               </span>
               <span>Calls indexed</span>
             </div>
