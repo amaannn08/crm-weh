@@ -115,3 +115,19 @@ export function dealFileUrl(file) {
   return `${base}/${encodeURIComponent(name)}`
 }
 
+export async function ingestTranscript(file) {
+  const formData = new FormData()
+  formData.append('transcript', file)
+  const base = API_BASE ? `${API_BASE}/deals` : '/api/deals'
+  const res = await fetch(`${base}/ingest-transcript`, {
+    method: 'POST',
+    headers: apiHeaders(null), // null = don't set Content-Type, let browser set multipart boundary
+    body: formData
+  })
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}))
+    throw new Error(err.error || 'Failed to ingest transcript')
+  }
+  return res.json()
+}
+

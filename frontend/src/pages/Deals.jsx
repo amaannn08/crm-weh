@@ -1,7 +1,8 @@
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useDealData } from '../context/DealDataContext'
 import PageShell from '../components/PageShell'
+import { ingestTranscript } from '../api/deals'
 
 function formatDate(value) {
   if (!value) return ''
@@ -107,6 +108,9 @@ function DealsPage() {
   const navigate = useNavigate()
   const { deals, loadDeals, dealsLoading } = useDealData()
   const [error, setError] = useState(null)
+  const [uploadStatus, setUploadStatus] = useState(null) // null | { ok, message }
+  const [ingesting, setIngesting] = useState(false)
+  const fileInputRef = useRef(null)
 
   const [search, setSearch] = useState('')
   const [minScore, setMinScore] = useState('0')
@@ -191,8 +195,8 @@ function DealsPage() {
       scored.length === 0
         ? '—'
         : (scored.reduce((acc, d) => acc + Number(d.founder_final_score || 0), 0) /
-            scored.length
-          ).toFixed(1)
+          scored.length
+        ).toFixed(1)
 
     return [
       {
@@ -229,6 +233,27 @@ function DealsPage() {
   const handleAddMeeting = (deal) => {
     navigate(`/meetings?dealId=${encodeURIComponent(deal.id)}`)
   }
+
+  const handleUploadClick = () => fileInputRef.current?.click()
+
+  const handleFileChange = async (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    e.target.value = '' // reset so same file can be re-uploaded
+    setIngesting(true)
+    setUploadStatus(null)
+    try {
+      const result = await ingestTranscript(file)
+      const action = result.mode === 'merged' ? 'merged into' : 'created'
+      setUploadStatus({ ok: true, message: `✓ "${result.company}" ${action} successfully` })
+      await loadDeals(true) // force refresh
+    } catch (err) {
+      setUploadStatus({ ok: false, message: err.message || 'Upload failed' })
+    } finally {
+      setIngesting(false)
+    }
+  }
+
   if (dealsLoading && !deals.length) {
     return (
       <PageShell
@@ -269,9 +294,45 @@ function DealsPage() {
       onTimeRangeChange={setTimeRange}
       summaryCards={summaryCards}
       rightHeaderSlot={
-        <div className="hidden items-center gap-2 rounded-full border border-emerald-100 bg-emerald-50 px-3 py-1.5 text-[11px] text-emerald-700 sm:inline-flex">
-          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-          <span>Pipeline up to date</span>
+        <div className="flex items-center gap-2">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".docx"
+            className="hidden"
+            onChange={handleFileChange}
+          />
+          <button
+            type="button"
+            onClick={handleUploadClick}
+            disabled={ingesting}
+            className="inline-flex items-center gap-1.5 rounded-full border border-[#E8E5DE] bg-white px-3 py-1.5 text-xs font-medium text-[#1A1815] shadow-sm hover:bg-[#F5F4F0] disabled:opacity-60"
+          >
+            {ingesting ? (
+              <>
+                <svg className="h-3 w-3 animate-spin" viewBox="0 0 24 24" fill="none">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                </svg>
+                Ingesting…
+              </>
+            ) : (
+              <>
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
+                </svg>
+                Upload transcript
+              </>
+            )}
+          </button>
+          {uploadStatus && (
+            <span
+              className={`text-xs font-medium ${uploadStatus.ok ? 'text-emerald-700' : 'text-red-600'
+                }`}
+            >
+              {uploadStatus.message}
+            </span>
+          )}
         </div>
       }
     >
