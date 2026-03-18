@@ -2,8 +2,6 @@ import React, { useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { fetchDealFiles, deleteDealFile, dealFileUrl } from '../api/deals'
 import {
-  fetchMeetings,
-  fetchDealMeeting,
   updateDealMeeting,
   deleteDealMeeting
 } from '../api/meetings'
@@ -50,9 +48,8 @@ function MeetingsTable({ filteredMeetings, selectedId, onSelectDeal }) {
                   <tr
                     key={meeting.id}
                     onClick={() => onSelectDeal(meeting.deal_id)}
-                    className={`cursor-pointer border-b border-[#E8E5DE] transition-colors ${
-                      isActive ? 'bg-[#FFEFE2]' : 'hover:bg-[#FAFAF8]'
-                    }`}
+                    className={`cursor-pointer border-b border-[#E8E5DE] transition-colors ${isActive ? 'bg-[#FFEFE2]' : 'hover:bg-[#FAFAF8]'
+                      }`}
                   >
                     <td className="px-4 py-3 align-top">
                       <div className="text-sm font-medium text-[#1A1815]">
@@ -83,13 +80,17 @@ function MeetingsTable({ filteredMeetings, selectedId, onSelectDeal }) {
 }
 
 function MeetingsPage() {
-  const { deals, loadDeals } = useDealData()
+  const {
+    deals, loadDeals,
+    meetings, meetingsLoading, loadMeetings,
+    updateMeetingInCache, removeMeetingFromCache
+  } = useDealData()
   const [searchParams] = useSearchParams()
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
 
   const [search, setSearch] = useState('')
-  const [meetings, setMeetings] = useState([])
+  // meetings now come from context — no local state
   const [selectedId, setSelectedId] = useState(null)
   const [form, setForm] = useState({
     exciting_reason: '',
@@ -109,9 +110,7 @@ function MeetingsPage() {
       setLoading(true)
       setError(null)
       try {
-        await loadDeals()
-        const data = await fetchMeetings()
-        setMeetings(data)
+        await Promise.all([loadDeals(), loadMeetings()])
       } catch (err) {
         console.error(err)
         setError('Failed to load meetings')
@@ -120,7 +119,7 @@ function MeetingsPage() {
       }
     }
     loadAll()
-  }, [loadDeals])
+  }, [loadDeals, loadMeetings])
 
   const filteredMeetings = useMemo(() => {
     const query = search.trim().toLowerCase()
@@ -142,9 +141,19 @@ function MeetingsPage() {
     return meetings.find((m) => m.deal_id === selectedId || m.id === selectedId) ?? null
   }, [meetings, selectedId])
 
+  // Build selectedDeal from the meeting row itself (which already has company/poc/sector
+  // from the JOIN in GET /meetings), falling back to the deals context for any extra fields.
   const selectedDeal = useMemo(() => {
     if (!selectedMeeting) return null
-    return deals.find((deal) => deal.id === selectedMeeting.deal_id) ?? null
+    const fromContext = deals.find((deal) => deal.id === selectedMeeting.deal_id) ?? null
+    // Always return something as long as we have a meeting — merge context fields on top
+    return {
+      id: selectedMeeting.deal_id,
+      company: selectedMeeting.company,
+      poc: selectedMeeting.poc,
+      sector: selectedMeeting.sector,
+      ...fromContext // context data wins if available
+    }
   }, [deals, selectedMeeting])
 
   useEffect(() => {
@@ -209,11 +218,7 @@ function MeetingsPage() {
         action_required: form.action_required || null,
         status: form.status || null
       })
-      setMeetings((prev) =>
-        prev.map((m) =>
-          m.id === updated.id || m.deal_id === selectedDeal.id ? updated : m
-        )
-      )
+      updateMeetingInCache(updated)  // keep context cache fresh
     } catch {
       setError('Failed to save meeting notes')
     } finally {
@@ -245,9 +250,9 @@ function MeetingsPage() {
     setError(null)
     try {
       await deleteDealMeeting(selectedDeal.id)
-      setMeetings((prev) =>
-        prev.filter((m) => m.deal_id !== selectedDeal.id)
-      )
+      // Remove from context cache — no re-fetch needed
+      const toRemove = meetings.find(m => m.deal_id === selectedDeal.id)
+      if (toRemove) removeMeetingFromCache(toRemove.id)
       setSelectedId(null)
       setFiles([])
     } catch {
@@ -266,7 +271,7 @@ function MeetingsPage() {
     }
   }, [meetings, searchParams])
 
-  if (loading) {
+  if (loading || meetingsLoading) {
     return (
       <div className="flex h-full items-center justify-center text-sm text-[#5A5650]">
         Loading meetings…

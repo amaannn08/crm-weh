@@ -1,5 +1,6 @@
 import { sql } from '../db/neon.js'
 import { extractDealFromTranscript } from './dealExtraction.js'
+import { normalizeCompanyName } from './companyIdentity.js'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // UTILS
@@ -347,4 +348,136 @@ export async function scoreAndSaveFounder({
     archetype: transcriptResult.archetype,
     evidence: transcriptResult.evidence
   }
+}
+
+function averageNumbers(values) {
+  const nums = values
+    .map((v) => (v === null || v === undefined ? null : Number(v)))
+    .filter((v) => typeof v === 'number' && !Number.isNaN(v))
+  if (!nums.length) return 0
+  const avg = nums.reduce((a, b) => a + b, 0) / nums.length
+  return Math.round(avg * 10) / 10
+}
+
+async function getLatestSoftScores(dealId) {
+  const rows = await sql`
+    SELECT
+      resilience,
+      ambition,
+      self_awareness,
+      domain_fit,
+      storytelling
+    FROM founder_soft_scores
+    WHERE deal_id = ${dealId}
+    ORDER BY created_at DESC
+    LIMIT 1
+  `
+  return rows[0] ?? null
+}
+
+async function getLatestHardScores(dealId) {
+  const rows = await sql`
+    SELECT
+      education_tier,
+      domain_work_experience,
+      seniority_of_roles,
+      previous_startup_experience
+    FROM founder_hard_scores
+    WHERE deal_id = ${dealId}
+    ORDER BY created_at DESC
+    LIMIT 1
+  `
+  return rows[0] ?? null
+}
+
+/**
+ * Averages *dimensions* across all deals matching the same company identity
+ * (normalized company name, or company_domain), then recomputes weighted/final/DD.
+ *
+ * Persists the merged scores as new rows for `dealId` (soft/hard/final) and updates
+ * the `deals` row denormalized score columns.
+ */
+export async function mergeScoresForCompanyIdentity({
+  dealId,
+  companyName,
+  companyDomain
+}) {
+  const dealIds = new Set([dealId])
+
+  const normalizedName = normalizeCompanyName(companyName)
+  if (normalizedName) {
+    const rows = await sql`
+      SELECT id
+      FROM deals
+      WHERE LOWER(TRIM(company)) = ${normalizedName}
+    `
+    for (const r of rows) if (r?.id) dealIds.add(r.id)
+  }
+
+  if (companyDomain) {
+    const rows = await sql`
+      SELECT id
+      FROM deals
+      WHERE company_domain = ${companyDomain}
+    `
+    for (const r of rows) if (r?.id) dealIds.add(r.id)
+  }
+
+  const ids = [...dealIds]
+
+  const softByDeal = await Promise.all(ids.map((id) => getLatestSoftScores(id)))
+  const hardByDeal = await Promise.all(ids.map((id) => getLatestHardScores(id)))
+
+  const mergedSoft = {
+    resilience: clampScore(averageNumbers(softByDeal.map((r) => r?.resilience))),
+    ambition: clampScore(averageNumbers(softByDeal.map((r) => r?.ambition))),
+    self_awareness: clampScore(
+      averageNumbers(softByDeal.map((r) => r?.self_awareness))
+    ),
+    domain_fit: clampScore(averageNumbers(softByDeal.map((r) => r?.domain_fit))),
+    storytelling: clampScore(
+      averageNumbers(softByDeal.map((r) => r?.storytelling))
+    )
+  }
+
+  const mergedHard = {
+    education_tier: clampScore(
+      averageNumbers(hardByDeal.map((r) => r?.education_tier))
+    ),
+    domain_work_experience: clampScore(
+      averageNumbers(hardByDeal.map((r) => r?.domain_work_experience))
+    ),
+    seniority_of_roles: clampScore(
+      averageNumbers(hardByDeal.map((r) => r?.seniority_of_roles))
+    ),
+    previous_startup_experience: clampScore(
+      averageNumbers(hardByDeal.map((r) => r?.previous_startup_experience))
+    )
+  }
+
+  const softWeightedScore = computeWeightedScore(mergedSoft, SOFT_WEIGHTS)
+  const hardWeightedScore = computeWeightedScore(mergedHard, HARD_WEIGHTS)
+  const finalScore = computeFinalScore(hardWeightedScore, softWeightedScore)
+  const ddResult = getDDRecommendation(finalScore)
+
+  return await saveFounderScore({
+    dealId,
+    softScores: mergedSoft,
+    softWeightedScore,
+    hardScores: mergedHard,
+    hardWeightedScore,
+    finalScore,
+    ddRecommendation: ddResult.recommendation,
+    archetype: null,
+    evidence: {
+      merged_from_deal_ids: ids,
+      merge_method: 'dimension_average_latest_scores_per_deal'
+    },
+    rawPayload: {
+      merged: true,
+      merged_from_deal_ids: ids,
+      company_name_normalized: normalizedName,
+      company_domain: companyDomain
+    }
+  })
 }

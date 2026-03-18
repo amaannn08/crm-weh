@@ -46,7 +46,7 @@ function LoginPage() {
       <div className="w-full flex flex-row ml-[15%] items-center">
         <div className="space-y-4 text-left">
           <div className="text-[10px] font-mono uppercase tracking-[0.3em] text-[#FF7102]">
-            WEH Call Intelligence
+            Jarvis AI
           </div>
           <h1 className="font-serif text-[40px] leading-[1.2] text-[#1A1815]">
             Sign in to unlock

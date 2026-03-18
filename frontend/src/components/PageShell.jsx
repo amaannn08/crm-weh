@@ -1,5 +1,16 @@
 import React, { useMemo } from 'react'
 
+// Compact stat chips replacing the old large summary cards
+export function StatChip({ label, value }) {
+  return (
+    <span className="inline-flex items-center gap-2 rounded-full border border-[#E8E5DE] bg-white px-3 py-1.5 text-[11px] font-medium text-[#5A5650] shadow-sm">
+      <span className="font-semibold text-[#1A1815]">{value}</span>
+      <span>{label}</span>
+    </span>
+  )
+}
+
+// Keep SummaryCard exported for any page still using it
 export function SummaryCard({ label, value, tone = 'neutral', helper }) {
   const toneClasses = {
     neutral: 'bg-white border-slate-200',
@@ -64,34 +75,39 @@ function PageShell({
         </div>
         <div className="flex flex-wrap items-center gap-3">
           {rightHeaderSlot}
-          <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs text-slate-700">
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-            <span className="whitespace-nowrap text-slate-700">
-              {activeRange.label}
-            </span>
-            {onTimeRangeChange && (
-              <select
-                value={activeRange.id}
-                onChange={(e) => onTimeRangeChange(e.target.value)}
-                className="ml-1 rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[11px] text-slate-700 focus:border-amber-400 focus:outline-none"
-              >
-                {ranges.map((r) => (
-                  <option key={r.id} value={r.id}>
-                    {r.label}
-                  </option>
-                ))}
-              </select>
-            )}
-          </div>
+          {timeRange != null && (
+            <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs text-slate-700">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+              <span className="whitespace-nowrap text-slate-700">
+                {activeRange.label}
+              </span>
+              {onTimeRangeChange && (
+                <select
+                  value={activeRange.id}
+                  onChange={(e) => onTimeRangeChange(e.target.value)}
+                  className="ml-1 rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[11px] text-slate-700 focus:border-amber-400 focus:outline-none"
+                >
+                  {ranges.map((r) => (
+                    <option key={r.id} value={r.id}>
+                      {r.label}
+                    </option>
+                  ))}
+                </select>
+              )}
+            </div>
+          )}
         </div>
       </header>
 
+      {/* compact stat chips — only total deals and avg score */}
       {summaryCards && summaryCards.length > 0 && (
-        <section className="grid gap-3 md:grid-cols-4">
-          {summaryCards.map((card) => (
-            <SummaryCard key={card.label} {...card} />
-          ))}
-        </section>
+        <div className="flex flex-wrap items-center gap-2">
+          {summaryCards
+            .filter((c) => c.label === 'Total deals' || c.label === 'Avg founder score')
+            .map((card) => (
+              <StatChip key={card.label} label={card.label} value={card.value} />
+            ))}
+        </div>
       )}
 
       <section className="min-h-0 flex-1 flex flex-col overflow-hidden rounded-2xl border border-[#E8E5DE] bg-white">

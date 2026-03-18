@@ -45,6 +45,16 @@ export async function updateDeal(id, patch) {
   return res.json()
 }
 
+export async function deleteDeal(id) {
+  const res = await fetch(dealUrl(id), {
+    method: 'DELETE',
+    headers: apiHeaders()
+  })
+  if (!res.ok && res.status !== 404) {
+    throw new Error('Failed to delete deal')
+  }
+}
+
 export async function fetchDealScore(id) {
   const res = await fetch(dealScoreUrl(id), {
     headers: apiHeaders()
@@ -113,5 +123,21 @@ export function dealFileUrl(file) {
   if (!name) return ''
   const base = API_BASE ? `${API_BASE}/uploads/deal-files` : '/uploads/deal-files'
   return `${base}/${encodeURIComponent(name)}`
+}
+
+export async function ingestTranscript(file) {
+  const formData = new FormData()
+  formData.append('transcript', file)
+  const base = API_BASE ? `${API_BASE}/deals` : '/api/deals'
+  const res = await fetch(`${base}/ingest-transcript`, {
+    method: 'POST',
+    headers: apiHeaders(null), // null = don't set Content-Type, let browser set multipart boundary
+    body: formData
+  })
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}))
+    throw new Error(err.error || 'Failed to ingest transcript')
+  }
+  return res.json()
 }
 

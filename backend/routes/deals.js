@@ -1,8 +1,9 @@
 import express from 'express'
 import multer from 'multer'
 import { join, basename } from 'path'
-import { mkdirSync, unlink } from 'fs'
-import { sql, poolRef } from '../db/neon.js'
+import { mkdirSync, unlink, readFileSync } from 'fs'
+import mammoth from 'mammoth'
+import { sql, poolRef, formatVector } from '../db/neon.js'
 import {
   clampScore,
   computeWeightedScore,
@@ -13,6 +14,13 @@ import {
   HARD_WEIGHTS
 } from '../services/founderScoring.js'
 import { ingestDocs } from '../services/ingestDocs.js'
+import { extractDealFromTranscript } from '../services/dealExtraction.js'
+import { embed } from '../services/embeddings.js'
+import {
+  isCompanyNameMissing,
+  normalizeCompanyName,
+  pickBestNonWehDomainFromTranscript
+} from '../services/companyIdentity.js'
 
 const DEAL_PATCH_FIELDS = [
   'company',
@@ -63,6 +71,240 @@ const upload = multer({
     }
   })
 })
+
+// Separate multer instance for transcript uploads (temp dir, cleaned up after processing)
+const transcriptUploadDir = join(process.cwd(), 'uploads', 'transcripts-tmp')
+mkdirSync(transcriptUploadDir, { recursive: true })
+const transcriptUpload = multer({
+  storage: multer.diskStorage({
+    destination: (_req, _file, cb) => cb(null, transcriptUploadDir),
+    filename: (_req, file, cb) => {
+      const ts = Date.now()
+      const safe = file.originalname.replace(/[^a-zA-Z0-9._-]/g, '_')
+      cb(null, `${ts}-${safe}`)
+    }
+  }),
+  fileFilter: (_req, file, cb) => {
+    if (file.originalname.toLowerCase().endsWith('.docx')) cb(null, true)
+    else cb(new Error('Only .docx files are supported'))
+  }
+})
+
+// ---------------------------------------------------------------------------
+// Helpers for the ingest-transcript route
+// ---------------------------------------------------------------------------
+function avgNums(...vals) {
+  const valid = vals.map(Number).filter(n => !isNaN(n) && n != null)
+  if (!valid.length) return null
+  return Math.round((valid.reduce((a, b) => a + b, 0) / valid.length) * 10) / 10
+}
+
+function deriveRiskLevelFromExtraction(extraction) {
+  const level = (extraction?.investor_reaction?.investor_interest_level || '').toLowerCase()
+  if (!level) return null
+  if (level.includes('high')) return 'Low'
+  if (level.includes('medium')) return 'Medium'
+  if (level.includes('low')) return 'High'
+  return null
+}
+
+function inferDateFromFilename(name) {
+  const m = name.match(/(\d{4})_(\d{2})_(\d{2})/)
+  if (!m) return null
+  return `${m[1]}-${m[2]}-${m[3]}`
+}
+
+// POST /deals/ingest-transcript
+// Accepts a single .docx, runs full ingestion pipeline, merges if company exists.
+router.post(
+  '/ingest-transcript',
+  transcriptUpload.single('transcript'),
+  async (req, res) => {
+    const file = req.file
+    if (!file) return res.status(400).json({ error: 'No file uploaded' })
+
+    const cleanup = () => unlink(file.path, () => { })
+
+    try {
+      // 1. Read text from docx
+      const buffer = readFileSync(file.path)
+      const { value: transcript } = await mammoth.extractRawText({ buffer })
+      if (!transcript?.trim()) {
+        cleanup()
+        return res.status(422).json({ error: 'Could not extract text from the uploaded file' })
+      }
+
+      // 2. Extract deal info + embed in parallel
+      const [extraction, embedding] = await Promise.all([
+        extractDealFromTranscript({ transcript }),
+        embed(transcript)
+      ])
+
+      const companyDomain = pickBestNonWehDomainFromTranscript(transcript)
+      const extractedCompany = extraction.company || ''
+      const companyMissing = isCompanyNameMissing(extractedCompany)
+      const meetingDate = extraction.meeting_date || inferDateFromFilename(file.originalname) || null
+      const vectorStr = formatVector(embedding)
+
+      // 3. Check if company already exists
+      let existingDeal = null
+      if (!companyMissing) {
+        const normalized = normalizeCompanyName(extractedCompany)
+        const byName = await sql`
+          SELECT * FROM deals
+          WHERE LOWER(TRIM(company)) = ${normalized}
+          LIMIT 1
+        `
+        existingDeal = byName[0] ?? null
+      }
+      if (!existingDeal && companyDomain) {
+        const byDomain = await sql`
+          SELECT * FROM deals WHERE company_domain = ${companyDomain} LIMIT 1
+        `
+        existingDeal = byDomain[0] ?? null
+      }
+
+      // 4a. MERGE path — company already exists
+      if (existingDeal) {
+        const dealId = existingDeal.id
+
+        // Upsert meeting row
+        const existingMeeting = await sql`
+          SELECT id FROM meetings WHERE drive_file_id = ${file.originalname} LIMIT 1
+        `
+        if (!existingMeeting[0]) {
+          await sql`
+            INSERT INTO meetings (drive_file_id, source_file_name, transcript, embedding)
+            VALUES (${file.originalname}, ${file.originalname}, ${transcript}, ${vectorStr}::vector)
+          `
+        }
+
+        // Average numeric scores
+        const mergedConviction = avgNums(
+          existingDeal.conviction_score,
+          extraction.deal_decision?.conviction_score
+        )
+
+        // New transcript text wins; fill blanks from existing
+        const newExciting = extraction.deal_decision?.why_exciting || null
+        const newRisks = extraction.deal_decision?.risks || null
+        const newPass = extraction.deal_decision?.reasons_pass || null
+        const newWatch = extraction.deal_decision?.reasons_watch || null
+        const newAction = extraction.deal_decision?.action_required || null
+
+        await sql`
+          UPDATE deals SET
+            exciting_reason   = COALESCE(${newExciting},   exciting_reason),
+            risks             = COALESCE(${newRisks},      risks),
+            pass_reasons      = COALESCE(${newPass},       pass_reasons),
+            watch_reasons     = COALESCE(${newWatch},      watch_reasons),
+            action_required   = COALESCE(${newAction},     action_required),
+            poc               = COALESCE(poc,              ${extraction.poc || null}),
+            sector            = COALESCE(sector,           ${extraction.sector || null}),
+            founder_name      = COALESCE(founder_name,     ${extraction.founder_name || null}),
+            company_domain    = COALESCE(company_domain,   ${companyDomain}),
+            conviction_score  = ${mergedConviction},
+            meeting_date      = COALESCE(meeting_date,     ${meetingDate}),
+            risk_level        = COALESCE(risk_level,       ${deriveRiskLevelFromExtraction(extraction)}),
+            source_file_name  = COALESCE(source_file_name, ${file.originalname}),
+            updated_at        = now()
+          WHERE id = ${dealId}
+        `
+
+        // Add new deal_insights row for this transcript
+        await sql`
+          INSERT INTO deal_insights (deal_id, meeting_outcome, founder_pitch, business_model_signals,
+            market_signals, investor_reaction, supporting_quotes, raw_payload)
+          VALUES (
+            ${dealId},
+            ${JSON.stringify(extraction.meeting_outcome ?? {})},
+            ${JSON.stringify(extraction.founder_pitch ?? {})},
+            ${JSON.stringify(extraction.business_model_signals ?? {})},
+            ${JSON.stringify(extraction.market_signals ?? {})},
+            ${JSON.stringify(extraction.investor_reaction ?? {})},
+            ${JSON.stringify(extraction.supporting_quotes ?? {})},
+            ${JSON.stringify(extraction)}
+          )
+        `
+
+        // Re-score founder and merge with existing score
+        await scoreAndSaveFounder({ dealId, transcript, extraction })
+
+        cleanup()
+        return res.json({
+          mode: 'merged',
+          dealId,
+          company: existingDeal.company
+        })
+      }
+
+      // 4b. CREATE path — new company
+      const dealRows = await sql`
+        INSERT INTO deals (
+          company, company_domain, date, poc, sector, founder_name,
+          meeting_date, business_model, status, stage, risk_level,
+          exciting_reason, risks, conviction_score, pass_reasons,
+          watch_reasons, action_required, source_file_name
+        ) VALUES (
+          ${extraction.company || 'Unknown company'},
+          ${companyDomain},
+          ${meetingDate},
+          ${extraction.poc || null},
+          ${extraction.sector || null},
+          ${extraction.founder_name || null},
+          ${meetingDate},
+          ${extraction.business_model || null},
+          ${'New'},
+          ${extraction.stage || null},
+          ${deriveRiskLevelFromExtraction(extraction)},
+          ${extraction.deal_decision?.why_exciting || null},
+          ${extraction.deal_decision?.risks || null},
+          ${extraction.deal_decision?.conviction_score ?? null},
+          ${extraction.deal_decision?.reasons_pass || null},
+          ${extraction.deal_decision?.reasons_watch || null},
+          ${extraction.deal_decision?.action_required || null},
+          ${file.originalname}
+        )
+        RETURNING *
+      `
+      const newDeal = dealRows[0]
+
+      await sql`
+        INSERT INTO meetings (drive_file_id, source_file_name, transcript, embedding)
+        VALUES (${file.originalname}, ${file.originalname}, ${transcript}, ${vectorStr}::vector)
+      `
+
+      await sql`
+        INSERT INTO deal_insights (deal_id, meeting_outcome, founder_pitch, business_model_signals,
+          market_signals, investor_reaction, supporting_quotes, raw_payload)
+        VALUES (
+          ${newDeal.id},
+          ${JSON.stringify(extraction.meeting_outcome ?? {})},
+          ${JSON.stringify(extraction.founder_pitch ?? {})},
+          ${JSON.stringify(extraction.business_model_signals ?? {})},
+          ${JSON.stringify(extraction.market_signals ?? {})},
+          ${JSON.stringify(extraction.investor_reaction ?? {})},
+          ${JSON.stringify(extraction.supporting_quotes ?? {})},
+          ${JSON.stringify(extraction)}
+        )
+      `
+
+      await scoreAndSaveFounder({ dealId: newDeal.id, transcript, extraction })
+
+      cleanup()
+      return res.status(201).json({
+        mode: 'created',
+        dealId: newDeal.id,
+        company: newDeal.company
+      })
+    } catch (err) {
+      cleanup()
+      console.error('Error ingesting transcript:', err)
+      return res.status(500).json({ error: err.message || 'Failed to ingest transcript' })
+    }
+  }
+)
+
 
 async function fetchDealBundle(id) {
   const dealRows = await sql`

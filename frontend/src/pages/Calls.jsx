@@ -84,7 +84,7 @@ function CallsPage() {
     if (scope === 'pitch') return 'Pitch calls'
     if (scope === 'portfolio') return 'Portfolio updates'
     if (scope === 'internal') return 'Internal strategy'
-    return 'WEH Call Intelligence'
+    return 'Jarvis AI'
   }, [scope])
 
   const activeSession = useMemo(
@@ -231,17 +231,17 @@ function CallsPage() {
           prev.map((session) =>
             session.id === sessionIdForUpdate
               ? {
-                  ...session,
-                  messages: [
-                    ...session.messages,
-                    {
-                      id: assistantId,
-                      role: 'assistant',
-                      content: text || '(No response)',
-                      timestamp: new Date()
-                    }
-                  ]
-                }
+                ...session,
+                messages: [
+                  ...session.messages,
+                  {
+                    id: assistantId,
+                    role: 'assistant',
+                    content: text || '(No response)',
+                    timestamp: new Date()
+                  }
+                ]
+              }
               : session
           )
         )
@@ -263,17 +263,17 @@ function CallsPage() {
             prev.map((session) =>
               session.id === sessionIdForUpdate
                 ? {
-                    ...session,
-                    messages: [
-                      ...session.messages,
-                      {
-                        id: assistantId,
-                        role: 'assistant',
-                        content,
-                        timestamp: new Date()
-                      }
-                    ]
-                  }
+                  ...session,
+                  messages: [
+                    ...session.messages,
+                    {
+                      id: assistantId,
+                      role: 'assistant',
+                      content,
+                      timestamp: new Date()
+                    }
+                  ]
+                }
                 : session
             )
           )
@@ -282,11 +282,11 @@ function CallsPage() {
             prev.map((session) =>
               session.id === sessionIdForUpdate
                 ? {
-                    ...session,
-                    messages: session.messages.map((m) =>
-                      m.id === assistantId ? { ...m, content } : m
-                    )
-                  }
+                  ...session,
+                  messages: session.messages.map((m) =>
+                    m.id === assistantId ? { ...m, content } : m
+                  )
+                }
                 : session
             )
           )
@@ -298,17 +298,17 @@ function CallsPage() {
           prev.map((session) =>
             session.id === sessionIdForUpdate
               ? {
-                  ...session,
-                  messages: [
-                    ...session.messages,
-                    {
-                      id: assistantId,
-                      role: 'assistant',
-                      content: content || '(No response)',
-                      timestamp: new Date()
-                    }
-                  ]
-                }
+                ...session,
+                messages: [
+                  ...session.messages,
+                  {
+                    id: assistantId,
+                    role: 'assistant',
+                    content: content || '(No response)',
+                    timestamp: new Date()
+                  }
+                ]
+              }
               : session
           )
         )
@@ -320,17 +320,17 @@ function CallsPage() {
           prev.map((session) =>
             session.id === sessionIdForUpdate
               ? {
-                  ...session,
-                  messages: [
-                    ...session.messages,
-                    {
-                      id: assistantId,
-                      role: 'assistant',
-                      content: `Error: ${err.message || 'Something went wrong.'}`,
-                      timestamp: new Date()
-                    }
-                  ]
-                }
+                ...session,
+                messages: [
+                  ...session.messages,
+                  {
+                    id: assistantId,
+                    role: 'assistant',
+                    content: `Error: ${err.message || 'Something went wrong.'}`,
+                    timestamp: new Date()
+                  }
+                ]
+              }
               : session
           )
         )
@@ -426,9 +426,9 @@ function CallsPage() {
         prev.map((s) =>
           s.id === sessionId
             ? {
-                ...s,
-                messages: loadedMessages || []
-              }
+              ...s,
+              messages: loadedMessages || []
+            }
             : s
         )
       )
@@ -485,11 +485,10 @@ function CallsPage() {
                     className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
                   >
                     <div
-                      className={`max-w-[80%] rounded-2xl px-5 py-3 text-[13px] leading-relaxed shadow-sm ${
-                        message.role === 'user'
+                      className={`max-w-[80%] rounded-2xl px-5 py-3 text-[13px] leading-relaxed shadow-sm ${message.role === 'user'
                           ? 'rounded-br-sm bg-[#FFE7D1] text-[#B85A12] shadow-[0_8px_18px_rgba(191,98,10,0.22)]'
                           : 'rounded-bl-sm border border-[#E8E5DE] bg-white text-[#1A1815] shadow-[0_6px_16px_rgba(26,24,21,0.08)]'
-                      }`}
+                        }`}
                     >
                       {message.role === 'assistant' ? (
                         <div className="[&_p]:mb-2 [&_p:last-child]:mb-0">
@@ -501,9 +500,8 @@ function CallsPage() {
                         <p className="whitespace-pre-wrap">{message.content}</p>
                       )}
                       <p
-                        className={`mt-1.5 text-[10px] ${
-                          message.role === 'user' ? 'text-[#B85A12]/70' : 'text-[#A39B8F]'
-                        }`}
+                        className={`mt-1.5 text-[10px] ${message.role === 'user' ? 'text-[#B85A12]/70' : 'text-[#A39B8F]'
+                          }`}
                       >
                         {(
                           message.timestamp instanceof Date
@@ -621,11 +619,10 @@ function CallsPage() {
                           setShowSessionsModal(false)
                         }
                       }}
-                      className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-left ${
-                        session.id === activeSessionId
+                      className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-left ${session.id === activeSessionId
                           ? 'bg-[#FAFAF8] text-[#1A1815]'
                           : 'bg-white text-[#5A5650] hover:bg-[#FAFAF8]'
-                      }`}
+                        }`}
                     >
                       <div className="flex items-center gap-2">
                         <span className="truncate">{session.name}</span>

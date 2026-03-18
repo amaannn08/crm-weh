@@ -89,6 +89,7 @@ export async function initSchema() {
       CREATE TABLE IF NOT EXISTS deals (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         company TEXT NOT NULL,
+        company_domain TEXT,
         date DATE,
         poc TEXT,
         sector TEXT,
@@ -131,6 +132,12 @@ export async function initSchema() {
     )
     await client.query(
       'ALTER TABLE deals ADD COLUMN IF NOT EXISTS source_file_name TEXT'
+    )
+    await client.query(
+      'ALTER TABLE deals ADD COLUMN IF NOT EXISTS company_domain TEXT'
+    )
+    await client.query(
+      'CREATE INDEX IF NOT EXISTS deals_company_domain_idx ON deals(company_domain)'
     )
     await client.query(
       'ALTER TABLE deals ADD COLUMN IF NOT EXISTS founder_soft_score NUMERIC(4,1)'
