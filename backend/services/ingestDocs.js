@@ -1,8 +1,13 @@
 import { sql, formatVector } from '../db/neon.js'
 import { embed } from './embeddings.js'
 import { extractDealFromTranscript } from './dealExtraction.js'
-import { scoreAndSaveFounder } from './founderScoring.js'
+import { mergeScoresForCompanyIdentity, scoreAndSaveFounder } from './founderScoring.js'
 import { getDefaultDocsDir, listDocxFiles, readDocxFile } from './docxReader.js'
+import {
+  isCompanyNameMissing,
+  normalizeCompanyName,
+  pickBestNonWehDomainFromTranscript
+} from './companyIdentity.js'
 
 async function findExistingMeeting(fileName) {
   const rows = await sql`
@@ -19,6 +24,29 @@ async function findExistingDealBySourceFile(fileName) {
     SELECT id
     FROM deals
     WHERE source_file_name = ${fileName}
+    LIMIT 1
+  `
+  return rows[0] ?? null
+}
+
+async function findExistingDealByCompanyName(companyName) {
+  const normalized = normalizeCompanyName(companyName)
+  if (!normalized) return null
+  const rows = await sql`
+    SELECT id
+    FROM deals
+    WHERE LOWER(TRIM(company)) = ${normalized}
+    LIMIT 1
+  `
+  return rows[0] ?? null
+}
+
+async function findExistingDealByCompanyDomain(companyDomain) {
+  if (!companyDomain) return null
+  const rows = await sql`
+    SELECT id
+    FROM deals
+    WHERE company_domain = ${companyDomain}
     LIMIT 1
   `
   return rows[0] ?? null
@@ -46,6 +74,12 @@ export async function ingestDocs({ limit, dryRun } = {}) {
     const existingMeeting = await findExistingMeeting(file.name)
     const existingDeal = await findExistingDealBySourceFile(file.name)
 
+    // Skip if already ingested
+    if (existingMeeting && existingDeal) {
+      console.log(`Skipping ${file.name}: already ingested.`)
+      continue
+    }
+
     let doc
     try {
       doc = await readDocxFile(file)
@@ -70,6 +104,10 @@ export async function ingestDocs({ limit, dryRun } = {}) {
         continue
       }
 
+      const extractedCompany = extraction.company || ''
+      const companyMissing = isCompanyNameMissing(extractedCompany)
+      const companyDomain = pickBestNonWehDomainFromTranscript(transcript)
+
       let meetingId = existingMeeting?.id
       if (!meetingId) {
         const embedding = await embed(transcript)
@@ -89,10 +127,27 @@ export async function ingestDocs({ limit, dryRun } = {}) {
         null
 
       let dealId = existingDeal?.id
+      let matchedExistingIdentity = false
+
+      if (!dealId) {
+        const byName = !companyMissing
+          ? await findExistingDealByCompanyName(extractedCompany)
+          : null
+        const byDomain = !byName && companyDomain
+          ? await findExistingDealByCompanyDomain(companyDomain)
+          : null
+        const identityMatch = byName || byDomain
+        if (identityMatch?.id) {
+          dealId = identityMatch.id
+          matchedExistingIdentity = true
+        }
+      }
+
       if (!dealId) {
         const dealRows = await sql`
           INSERT INTO deals (
             company,
+            company_domain,
             date,
             poc,
             sector,
@@ -112,6 +167,7 @@ export async function ingestDocs({ limit, dryRun } = {}) {
           )
           VALUES (
             ${extraction.company || 'Unknown company'},
+            ${companyDomain},
             ${meetingDate},
             ${extraction.poc || null},
             ${extraction.sector || null},
@@ -130,7 +186,7 @@ export async function ingestDocs({ limit, dryRun } = {}) {
             ${file.name}
           )
           RETURNING *
-        `   
+        `
         dealId = dealRows[0].id
       }
 
@@ -139,6 +195,14 @@ export async function ingestDocs({ limit, dryRun } = {}) {
         transcript,
         extraction
       })
+
+      if (matchedExistingIdentity) {
+        await mergeScoresForCompanyIdentity({
+          dealId,
+          companyName: companyMissing ? null : extractedCompany,
+          companyDomain
+        })
+      }
 
       await sql`
         INSERT INTO deal_insights (

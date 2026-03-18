@@ -1,13 +1,11 @@
 import 'dotenv/config'
-import { GoogleGenAI } from '@google/genai'
-
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY
-if (!GEMINI_API_KEY) {
-  throw new Error('GEMINI_API_KEY is required for deal extraction')
+const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY
+if (!DEEPSEEK_API_KEY) {
+  throw new Error('DEEPSEEK_API_KEY is required for deal extraction')
 }
 
-const MODEL_NAME = 'gemini-2.0-flash'
-const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY })
+const MODEL_NAME = process.env.DEAL_EXTRACTION_MODEL || 'deepseek-chat'
+const URL = process.env.DEEPSEEK_BASE_URL || 'https://api.deepseek.com/chat/completions'
 
 function delay(ms) {
   return new Promise((resolve) => {
@@ -29,25 +27,41 @@ function parseJsonFromModel(text) {
   }
 }
 
-function extractTextFromResult(result) {
-
-  if (result?.response && typeof result.response.text === 'function') {
-    const value = result.response.text()
-    if (typeof value === 'string' && value.trim()) return value
+async function deepseekChatJson({ systemInstruction, prompt }) {
+  const body = {
+    model: MODEL_NAME,
+    messages: [
+      { role: 'system', content: systemInstruction },
+      { role: 'user', content: prompt }
+    ],
+    stream: false
   }
 
+  const response = await fetch(URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${DEEPSEEK_API_KEY}`
+    },
+    body: JSON.stringify(body)
+  })
 
-  const firstCandidate = result?.candidates?.[0]
-  const parts = firstCandidate?.content?.parts
-  if (Array.isArray(parts)) {
-    const text = parts
-      .map((part) => (typeof part.text === 'string' ? part.text : ''))
-      .join('')
-      .trim()
-    if (text) return text
+  if (!response.ok) {
+    const text = await response.text().catch(() => '')
+    throw new Error(
+      `DeepSeek extraction request failed with ${response.status} ${response.statusText}: ${text.slice(
+        0,
+        200
+      )}`
+    )
   }
 
-  throw new Error('Model did not return a valid response for deal extraction')
+  const json = await response.json()
+  const content = json?.choices?.[0]?.message?.content
+  if (!content || typeof content !== 'string') {
+    throw new Error('DeepSeek did not return message content for deal extraction')
+  }
+  return content
 }
 
 export async function extractDealFromTranscript({ transcript }) {
@@ -174,18 +188,12 @@ Rules:
 
   for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt += 1) {
     try {
-      const result = await ai.models.generateContent({
-        model: MODEL_NAME,
-        contents: [{ role: 'user', parts: [{ text: prompt }] }],
-        config: { systemInstruction }
-      })
-
-      const text = extractTextFromResult(result)
+      const text = await deepseekChatJson({ systemInstruction, prompt })
       return parseJsonFromModel(text)
     } catch (err) {
       lastError = err
       console.warn(
-        `Gemini error during deal extraction (attempt ${attempt}/${MAX_ATTEMPTS})`,
+        `DeepSeek error during deal extraction (attempt ${attempt}/${MAX_ATTEMPTS})`,
         err
       )
       if (attempt < MAX_ATTEMPTS) {

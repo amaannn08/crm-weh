@@ -3,7 +3,6 @@ import { useSearchParams } from 'react-router-dom'
 import { fetchDealFiles, deleteDealFile, dealFileUrl } from '../api/deals'
 import {
   fetchMeetings,
-  fetchDealMeeting,
   updateDealMeeting,
   deleteDealMeeting
 } from '../api/meetings'
@@ -50,9 +49,8 @@ function MeetingsTable({ filteredMeetings, selectedId, onSelectDeal }) {
                   <tr
                     key={meeting.id}
                     onClick={() => onSelectDeal(meeting.deal_id)}
-                    className={`cursor-pointer border-b border-[#E8E5DE] transition-colors ${
-                      isActive ? 'bg-[#FFEFE2]' : 'hover:bg-[#FAFAF8]'
-                    }`}
+                    className={`cursor-pointer border-b border-[#E8E5DE] transition-colors ${isActive ? 'bg-[#FFEFE2]' : 'hover:bg-[#FAFAF8]'
+                      }`}
                   >
                     <td className="px-4 py-3 align-top">
                       <div className="text-sm font-medium text-[#1A1815]">
@@ -142,9 +140,19 @@ function MeetingsPage() {
     return meetings.find((m) => m.deal_id === selectedId || m.id === selectedId) ?? null
   }, [meetings, selectedId])
 
+  // Build selectedDeal from the meeting row itself (which already has company/poc/sector
+  // from the JOIN in GET /meetings), falling back to the deals context for any extra fields.
   const selectedDeal = useMemo(() => {
     if (!selectedMeeting) return null
-    return deals.find((deal) => deal.id === selectedMeeting.deal_id) ?? null
+    const fromContext = deals.find((deal) => deal.id === selectedMeeting.deal_id) ?? null
+    // Always return something as long as we have a meeting — merge context fields on top
+    return {
+      id: selectedMeeting.deal_id,
+      company: selectedMeeting.company,
+      poc: selectedMeeting.poc,
+      sector: selectedMeeting.sector,
+      ...fromContext // context data wins if available
+    }
   }, [deals, selectedMeeting])
 
   useEffect(() => {
