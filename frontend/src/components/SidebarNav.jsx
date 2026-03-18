@@ -137,10 +137,11 @@ function SidebarNav() {
 
       <div className="flex-1 overflow-y-auto px-2 pb-4">
         <div className="space-y-1 px-2 pb-4">
+          <FolderNavItem to="/dashboard" label="Dashboard" badge={null} emoji="🏠" active={pathname === '/dashboard'} />
+          <FolderNavItem to="/assistant" label="Jarvis AI" badge={null} emoji="🤖" active={onAssistant} />
           <FolderNavItem to="/deals" label="Deals" badge={deals.length || null} emoji="📊" active={onDeals} />
           <FolderNavItem to="/meetings" label="Meetings" badge={deals.length || null} emoji="📅" active={onMeetings} />
           <FolderNavItem to="/portfolio-news" label="Portfolio News" badge={null} emoji="📰" active={onPortfolioNews} />
-          <FolderNavItem to="/assistant" label="Jarvis AI" badge={null} emoji="🤖" active={onAssistant} />
         </div>
 
         <div className="mx-2 h-px bg-[#E8E5DE]" />

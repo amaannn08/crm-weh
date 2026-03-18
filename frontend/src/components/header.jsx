@@ -16,16 +16,12 @@ function Header() {
   return (
     <header className="z-20 border-b border-[#E8E5DE] bg-[#FAFAF8]/95 backdrop-blur">
       <div className="mx-auto flex h-14 w-full items-center justify-between gap-4 px-6">
-        <div className="flex items-center gap-3">
-          <img
-            src="/images/logo-black.svg"
-            alt="WH Logo"
-            className="w-20"
-          />
+        <button type="button" onClick={() => navigate('/dashboard')} className="flex items-center gap-3 hover:opacity-80 transition-opacity">
+          <img src="/images/logo-black.svg" alt="WH Logo" className="w-20" />
           <span className="text-[11px] font-medium uppercase tracking-[0.26em] text-[#FF7102] font-mono">
             Jarvis AI
           </span>
-        </div>
+        </button>
 
         <div className="flex items-center gap-3">
           <div className="hidden items-center gap-2 md:flex font-mono">

@@ -1,6 +1,7 @@
 import React from 'react'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import AppLayout from './layout/AppLayout'
+import DashboardPage from './pages/Dashboard'
 import CallsPage from './pages/Calls'
 import DealsPage from './pages/Deals'
 import DealDetailPage from './pages/DealDetail'
@@ -17,7 +18,7 @@ function ProtectedRoute({ children }) {
 
 function PublicLoginOnly({ children }) {
   const { isAuthenticated } = useAuth()
-  if (isAuthenticated) return <Navigate to="/assistant" replace />
+  if (isAuthenticated) return <Navigate to="/dashboard" replace />
   return children
 }
 
@@ -42,7 +43,16 @@ function App() {
           }
         />
 
-        <Route path="/" element={<Navigate to="/assistant" replace />} />
+        <Route path="/" element={<Navigate to="/dashboard" replace />} />
+
+        <Route
+          path="/dashboard"
+          element={
+            <AuthedLayout>
+              <DashboardPage />
+            </AuthedLayout>
+          }
+        />
 
         <Route
           path="/calls"
@@ -105,7 +115,7 @@ function App() {
           }
         />
 
-        <Route path="*" element={<Navigate to="/assistant" replace />} />
+        <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>
     </BrowserRouter>
   )
