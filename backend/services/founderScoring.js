@@ -16,7 +16,8 @@ export function clampScore(value) {
 
 /**
  * Accepts a scores object and a weights object.
- * Skips dimensions with score = 0 and re-normalises weights across active ones.
+ * ALL dimensions are included — a score of 0 means the trait was absent/unmentioned
+ * and should genuinely lower the final result rather than being silently skipped.
  */
 export function computeWeightedScore(scores, weights) {
   const entries = Object.entries(weights).map(([key, weight]) => ({
@@ -25,13 +26,12 @@ export function computeWeightedScore(scores, weights) {
     value: clampScore(scores[key] ?? 0)
   }))
 
-  const active = entries.filter((entry) => entry.value > 0)
-  if (!active.length) return 0
+  if (!entries.length) return 0
 
-  const totalWeight = active.reduce((sum, entry) => sum + entry.weight, 0)
+  const totalWeight = entries.reduce((sum, entry) => sum + entry.weight, 0)
   if (totalWeight <= 0) return 0
 
-  const score = active.reduce((sum, entry) => {
+  const score = entries.reduce((sum, entry) => {
     return sum + entry.value * (entry.weight / totalWeight)
   }, 0)
 
@@ -228,9 +228,9 @@ export async function saveFounderScore({
       ${softWeightedScore},
       ${archetype},
       ${JSON.stringify({
-        evidence,
-        raw: rawPayload
-      })}
+    evidence,
+    raw: rawPayload
+  })}
     )
     RETURNING *
   `

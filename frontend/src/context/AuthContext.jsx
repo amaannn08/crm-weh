@@ -20,6 +20,13 @@ export function AuthProvider({ children }) {
     setTokenState(null)
   }
 
+  // Automatically log out when any API call receives a 401 (token expired)
+  useEffect(() => {
+    const handler = () => logout()
+    window.addEventListener('auth:expired', handler)
+    return () => window.removeEventListener('auth:expired', handler)
+  }, [])
+
   const isAuthenticated = !!token
 
   return (
